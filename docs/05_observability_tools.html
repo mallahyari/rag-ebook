@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>A Practical Approach to Retrieval Augmented Generation Systems - 5&nbsp; Observability Tools for RAG</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./references.html" rel="next">
+<link href="./04_advanced_rag.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./05_observability_tools.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">A Practical Approach to Retrieval Augmented Generation Systems</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/mallahyari/chat2docs" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_rag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Retrieval Augmented Generation (RAG)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_prepare_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04_advanced_rag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05_observability_tools.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#weights-biases-integration-with-llamaindex" id="toc-weights-biases-integration-with-llamaindex" class="nav-link active" data-scroll-target="#weights-biases-integration-with-llamaindex"><span class="header-section-number">5.1</span> Weights &amp; Biases Integration with LlamaIndex</a></li>
+  <li><a href="#phoenix-integration-with-llamaindex" id="toc-phoenix-integration-with-llamaindex" class="nav-link" data-scroll-target="#phoenix-integration-with-llamaindex"><span class="header-section-number">5.2</span> Phoenix Integration with LlamaIndex</a></li>
+  <li><a href="#honeyhive-integration-with-llamaindex" id="toc-honeyhive-integration-with-llamaindex" class="nav-link" data-scroll-target="#honeyhive-integration-with-llamaindex"><span class="header-section-number">5.3</span> HoneyHive Integration with LlamaIndex</a></li>
+  <li><a href="#ending-note" id="toc-ending-note" class="nav-link" data-scroll-target="#ending-note"><span class="header-section-number">6</span> Ending Note</a>
+  <ul class="collapse">
+  <li><a href="#acknowledgements" id="toc-acknowledgements" class="nav-link" data-scroll-target="#acknowledgements"><span class="header-section-number">6.1</span> Acknowledgements</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/mallahyari/chat2docs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>An observability tool is a software or platform designed to help monitor, analyze, and gain insights into the performance, behavior, and health of a complex system, such as a machine learning model, a RAG system, or a software application. These tools provide visibility into various aspects of a system, allowing operators, administrators, and developers to understand how the system operates and to detect and troubleshoot issues.</p>
+<p>Key components and features of an observability tool typically include:</p>
+<ol type="1">
+<li><p><strong>Data Collection:</strong> Observability tools collect data from various sources within the system. This data can include metrics (e.g., CPU usage, memory usage), logs, traces, events, and more. The broader the range of data collected, the more comprehensive the observability.</p></li>
+<li><p><strong>Storage:</strong> Data collected by the tool is stored for analysis and historical reference. The storage can be in the form of time-series databases, log repositories, or other storage solutions designed to handle large volumes of data.</p></li>
+<li><p><strong>Analysis:</strong> Observability tools provide analytical capabilities to process and make sense of the collected data. This includes querying data, aggregating metrics, and identifying patterns or anomalies.</p></li>
+<li><p><strong>Visualization:</strong> The tools offer visualization capabilities to create graphs, charts, dashboards, and reports that make it easier for users to interpret data. Visualizations help spot trends, issues, and performance bottlenecks.</p></li>
+<li><p><strong>Alerting:</strong> Many observability tools allow users to define alerting rules. When certain conditions are met, the tool sends notifications, enabling operators to respond to issues promptly.</p></li>
+<li><p><strong>Tracing:</strong> For distributed systems, tracing is important. Observability tools often provide tracing features to track requests as they move through various services or components of a system. This helps pinpoint performance bottlenecks and issues.</p></li>
+<li><p><strong>User Interface:</strong> A user-friendly interface is essential for interacting with the data and insights generated by the observability tool. It should allow users to explore data, set up alerts, and visualize information.</p></li>
+<li><p><strong>Integration:</strong> Observability tools should integrate with various components of the system, such as applications, databases, containers, and cloud services, to capture relevant data.</p></li>
+<li><p><strong>Scalability:</strong> The tool should be able to scale with the system it monitors. It needs to handle growing data volumes and provide insights without compromising performance.</p></li>
+<li><p><strong>Customization:</strong> Users should be able to customize the tool to meet the specific needs of their system. This includes defining custom dashboards, alerts, and data collection methods.</p></li>
+</ol>
+<p>There are several observability tools for RAG based systems. Frameworks like LlamaIndex also provides an easy way to integrate some of these tools with RAG application. This enable us to:</p>
+<ul>
+<li>View LLM prompt inputs and outputs</li>
+<li>Make sure that all the components such as embedding models, LLMs and vector databases are working as expected</li>
+<li>View indexing and querying traces</li>
+</ul>
+<p>In order to integrate observability tools with LlamaIndex, we simply need to do the following, <a href="#fig-observability-llamaindex">Figure&nbsp;<span>5.1</span></a>:</p>
+<div id="fig-observability-llamaindex" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_llamaindex.png" class="img-fluid figure-img" alt="General pattern for integrating observability tools into LlamaIndex"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.1: General pattern for integrating observability tools into LlamaIndex</figcaption>
+</figure>
+</div>
+<section id="weights-biases-integration-with-llamaindex" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="weights-biases-integration-with-llamaindex"><span class="header-section-number">5.1</span> Weights &amp; Biases Integration with LlamaIndex</h2>
+<p><a href="https://docs.wandb.ai/">Weights &amp; Biases</a> is a machine learning platform that empowers developers to enhance their models efficiently. It provides versatile tools for experiment tracking, dataset versioning, model evaluation, result visualization, regression identification, and seamless collaboration with peers.</p>
+<p>The code depicted in <a href="#fig-observability-wb-code1">Figure&nbsp;<span>5.2</span></a> shows how to integrate W&amp;B with LlamaIndex. For complete example, please see <a href="https://gpt-index.readthedocs.io/en/latest/examples/callbacks/WandbCallbackHandler.html">here</a>.</p>
+<div id="fig-observability-wb-code1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_wb_code1.png" class="img-fluid figure-img" alt="W&amp;B integration with LlamaIndex"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.2: W&amp;B integration with LlamaIndex</figcaption>
+</figure>
+</div>
+<p>We can even see the logs as shown in <a href="#fig-observability-wb-log">Figure&nbsp;<span>5.3</span></a>.</p>
+<div id="fig-observability-wb-log" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_wb_log.png" class="img-fluid figure-img" alt="W&amp;B logs at different steps"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.3: W&amp;B logs at different steps</figcaption>
+</figure>
+</div>
+<p>If we go the W&amp;B website and login, we can see all the details, <a href="#fig-observability-wb">Figure&nbsp;<span>5.4</span></a> displays our project including charts, artifacts, logs, and traces.</p>
+<div id="fig-observability-wb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_wb.png" class="img-fluid figure-img" alt="W&amp;B dashboard"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.4: W&amp;B dashboard</figcaption>
+</figure>
+</div>
+</section>
+<section id="phoenix-integration-with-llamaindex" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="phoenix-integration-with-llamaindex"><span class="header-section-number">5.2</span> Phoenix Integration with LlamaIndex</h2>
+<p><a href="https://github.com/Arize-ai/phoenix">Phoenix</a> is an observability tool designed for LLM applications, offering insight into their inner workings. It provides a visual representation of query engine calls and highlights problematic execution spans based on factors like latency and token count, aiding in performance evaluation and optimization.</p>
+<p><a href="#fig-observability-phoenix">Figure&nbsp;<span>5.5</span></a> shows the general usage pattern to use Phoenix.</p>
+<div id="fig-observability-phoenix" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_phoenix.png" class="img-fluid figure-img" alt="Phoenix integration with LlamaIndex RAG applications"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.5: Phoenix integration with LlamaIndex RAG applications</figcaption>
+</figure>
+</div>
+<p>When we run queries, we can see the traces in real time in the Phoenix UI. <a href="#fig-observability-phoenix-ui">Figure&nbsp;<span>5.6</span></a> illustrates the Phoenix UI for a RAG application.</p>
+<div id="fig-observability-phoenix-ui" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_phoenix_ui.png" class="img-fluid figure-img" alt="Phoenix UI that shows traces of queries in real time."></p>
+<figcaption class="figure-caption">Figure&nbsp;5.6: Phoenix UI that shows traces of queries in real time.</figcaption>
+</figure>
+</div>
+<p>A complete example of tracing a LlamaIndex RAG application using Phoenix is available at this <a href="https://colab.research.google.com/github/Arize-ai/phoenix/blob/main/tutorials/tracing/llama_index_tracing_tutorial.ipynb">link</a>.</p>
+</section>
+<section id="honeyhive-integration-with-llamaindex" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="honeyhive-integration-with-llamaindex"><span class="header-section-number">5.3</span> HoneyHive Integration with LlamaIndex</h2>
+<p><a href="https://honeyhive.ai/">HoneyHive</a> is a framework that can be used to test and evaluate, monitor and debug LLM applications. It can be seamlessly integrated as displayed in <a href="#fig-observability-honeyhive">Figure&nbsp;<span>5.7</span></a> into LlamaIndex applications.</p>
+<div id="fig-observability-honeyhive" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_honeyhive.png" class="img-fluid figure-img" alt="HoneyHive integration with LlamaIndex RAG applications"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.7: HoneyHive integration with LlamaIndex</figcaption>
+</figure>
+</div>
+<p>The HoneyHive dashaboard looks like <a href="#fig-observability-honeyhive-dashboard">Figure&nbsp;<span>5.8</span></a> below:</p>
+<div id="fig-observability-honeyhive-dashboard" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/observability_honeyhive_dashboard.png" class="img-fluid figure-img" alt="HoneyHive dashboard"></p>
+<figcaption class="figure-caption">Figure&nbsp;5.8: HoneyHive dashboard</figcaption>
+</figure>
+</div>
+<p>For a complete guide, see this <a href="https://gpt-index.readthedocs.io/en/latest/examples/callbacks/HoneyHiveLlamaIndexTracer.html">tutorial</a>.</p>
+<p>Other observability tools we can use include <a href="https://truera.com/ai-quality-education/generative-ai-and-llms/retrieval-augmented-language-models-need-an-observability-layer/">Truera</a>, <a href="https://www.databricks.com/blog/mlflow-2-7-llmops-prompt-eng-ai-gateway-updates">databricks</a>, and <a href="https://www.elastic.co/blog/transforming-observability-ai-assistant-otel-standardization-continuous-profiling-log-analytics">Elastic observability</a> among many other tools that are available.</p>
+<div style="page-break-before: always;">
+
+</div>
+</section>
+<section id="ending-note" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Ending Note</h1>
+<p>In concluding our journey through the pages of “<strong>A Practical Approach to Retrieval Augmented Generation Systems</strong>,” we hope you have gained valuable insights into the world of Retrieval-Augmented Generation. As the landscape of AI continues to evolve, RAG systems present an exciting intersection of retrieval and generation technologies, with immense potential across a multitude of industries and applications. With each chapter, we’ve delved deeper into the core principles, strategies, and techniques that underpin the development and implementation of RAG systems.</p>
+<p>Remember that the field of AI is dynamic and ever-changing. While this book has aimed to provide a comprehensive understanding of RAG, new developments and possibilities are always on the horizon. We encourage you to continue exploring, experimenting, and innovating in the realm of Retrieval-Augmented Generation. Your journey doesn’t end here; it’s just the beginning.</p>
+<p>Thank you for joining us on this transformative adventure into the heart of AI’s future.</p>
+<section id="acknowledgements" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="acknowledgements"><span class="header-section-number">6.1</span> Acknowledgements</h2>
+<p>We would like to express our gratitude to the teams behind <a href="https://www.llamaindex.ai/">LlamaIndex</a>, <a href="https://www.langchain.com/">LangChain</a>, and <a href="https://haystack.deepset.ai/">Haystack</a> for their invaluable contributions to the field of Retrieval-Augmented Generation (RAG). Their comprehensive documentations and tutorials have been instrumental in our journey, allowing us to learn from their expertise and leverage the fascinating tools they have built.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./04_advanced_rag.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./references.html" class="pagination-link">
+        <span class="nav-page-text">References</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>A Practical Approach to Retrieval Augmented Generation Systems - 3&nbsp; RAG Pipeline Implementation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./04_advanced_rag.html" rel="next">
+<link href="./02_rag.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./03_prepare_data.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">A Practical Approach to Retrieval Augmented Generation Systems</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/mallahyari/chat2docs" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_rag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Retrieval Augmented Generation (RAG)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_prepare_data.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04_advanced_rag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05_observability_tools.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#preprocessing-pdf-documents" id="toc-preprocessing-pdf-documents" class="nav-link active" data-scroll-target="#preprocessing-pdf-documents"><span class="header-section-number">3.1</span> Preprocessing PDF documents</a>
+  <ul class="collapse">
+  <li><a href="#pdf-text-extraction" id="toc-pdf-text-extraction" class="nav-link" data-scroll-target="#pdf-text-extraction"><span class="header-section-number">3.1.1</span> PDF Text Extraction</a></li>
+  <li><a href="#handling-multiple-pages" id="toc-handling-multiple-pages" class="nav-link" data-scroll-target="#handling-multiple-pages"><span class="header-section-number">3.1.2</span> Handling Multiple Pages</a></li>
+  <li><a href="#text-cleanup-and-normalization" id="toc-text-cleanup-and-normalization" class="nav-link" data-scroll-target="#text-cleanup-and-normalization"><span class="header-section-number">3.1.3</span> Text Cleanup and Normalization</a></li>
+  <li><a href="#language-detection" id="toc-language-detection" class="nav-link" data-scroll-target="#language-detection"><span class="header-section-number">3.1.4</span> Language Detection</a></li>
+  </ul></li>
+  <li><a href="#data-ingestion-pipeline-implementation" id="toc-data-ingestion-pipeline-implementation" class="nav-link" data-scroll-target="#data-ingestion-pipeline-implementation"><span class="header-section-number">3.2</span> Data Ingestion Pipeline Implementation</a></li>
+  <li><a href="#generation-component-implementation" id="toc-generation-component-implementation" class="nav-link" data-scroll-target="#generation-component-implementation"><span class="header-section-number">3.3</span> Generation Component Implementation</a></li>
+  <li><a href="#impact-of-text-splitting-on-retrieval-augmented-generation-rag-quality" id="toc-impact-of-text-splitting-on-retrieval-augmented-generation-rag-quality" class="nav-link" data-scroll-target="#impact-of-text-splitting-on-retrieval-augmented-generation-rag-quality"><span class="header-section-number">3.4</span> Impact of Text Splitting on Retrieval Augmented Generation (RAG) Quality</a>
+  <ul class="collapse">
+  <li><a href="#splitting-by-character" id="toc-splitting-by-character" class="nav-link" data-scroll-target="#splitting-by-character"><span class="header-section-number">3.4.1</span> Splitting by Character</a></li>
+  <li><a href="#splitting-by-token" id="toc-splitting-by-token" class="nav-link" data-scroll-target="#splitting-by-token"><span class="header-section-number">3.4.2</span> Splitting by Token</a></li>
+  <li><a href="#finding-the-right-balance" id="toc-finding-the-right-balance" class="nav-link" data-scroll-target="#finding-the-right-balance"><span class="header-section-number">3.4.3</span> Finding the Right Balance</a></li>
+  <li><a href="#hybrid-approaches" id="toc-hybrid-approaches" class="nav-link" data-scroll-target="#hybrid-approaches"><span class="header-section-number">3.4.4</span> Hybrid Approaches</a></li>
+  </ul></li>
+  <li><a href="#impact-of-metadata-in-the-vector-database-on-retrieval-augmented-generation-rag" id="toc-impact-of-metadata-in-the-vector-database-on-retrieval-augmented-generation-rag" class="nav-link" data-scroll-target="#impact-of-metadata-in-the-vector-database-on-retrieval-augmented-generation-rag"><span class="header-section-number">3.5</span> Impact of Metadata in the Vector Database on Retrieval Augmented Generation (RAG)</a>
+  <ul class="collapse">
+  <li><a href="#contextual-clues" id="toc-contextual-clues" class="nav-link" data-scroll-target="#contextual-clues"><span class="header-section-number">3.5.1</span> Contextual Clues</a></li>
+  <li><a href="#improved-document-retrieval" id="toc-improved-document-retrieval" class="nav-link" data-scroll-target="#improved-document-retrieval"><span class="header-section-number">3.5.2</span> Improved Document Retrieval</a></li>
+  <li><a href="#contextual-response-generation" id="toc-contextual-response-generation" class="nav-link" data-scroll-target="#contextual-response-generation"><span class="header-section-number">3.5.3</span> Contextual Response Generation</a></li>
+  <li><a href="#user-experience-and-trust" id="toc-user-experience-and-trust" class="nav-link" data-scroll-target="#user-experience-and-trust"><span class="header-section-number">3.5.4</span> User Experience and Trust</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/mallahyari/chat2docs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span id="sec-three" class="quarto-section-identifier"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="preprocessing-pdf-documents" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="preprocessing-pdf-documents"><span class="header-section-number">3.1</span> Preprocessing PDF documents</h2>
+<p>Before we can harness the power of Large Language Models (LLMs) and particularly RAG method for question answering over PDF documents, it’s essential to prepare our data. PDFs, while a common format for documents, pose unique challenges for text extraction and analysis. In this section, we’ll explore the critical steps involved in preprocessing PDF documents to make them suitable for our Chat-to-PDF app. These steps are not only essential for PDFs but are also applicable to other types of files. However, our primary focus is on PDF documents due to their prevalence in various industries and applications.</p>
+<section id="pdf-text-extraction" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="pdf-text-extraction"><span class="header-section-number">3.1.1</span> PDF Text Extraction</h3>
+<p>PDFs may contain a mix of text, images, tables, and other elements. To enable text-based analysis and question answering, we need to extract the textual content from PDFs. Here’s how you can accomplish this:</p>
+<ul>
+<li><strong>Text Extraction Tools:</strong> Explore available tools and libraries like PyPDF2, pdf2txt, or PDFMiner to extract text from PDF files programmatically.</li>
+<li><strong>Handling Scanned Documents:</strong> If your PDFs contain scanned images instead of selectable text, you may need Optical Character Recognition (OCR) software to convert images into machine-readable text.</li>
+<li><strong>Quality Control:</strong> Check the quality of extracted text and perform any necessary cleanup, such as removing extraneous characters or fixing formatting issues.</li>
+</ul>
+</section>
+<section id="handling-multiple-pages" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="handling-multiple-pages"><span class="header-section-number">3.1.2</span> Handling Multiple Pages</h3>
+<p>PDF documents can span multiple pages, and maintaining context across pages is crucial for question answering. Here’s how you can address this challenge:</p>
+<ul>
+<li><strong>Page Segmentation:</strong> Segment the document into logical units, such as paragraphs or sections, to ensure that context is preserved.</li>
+<li><strong>Metadata Extraction:</strong> Extract metadata such as document titles, authors, page numbers, and creation dates. This metadata can aid in improving searchability and answering user queries.</li>
+</ul>
+</section>
+<section id="text-cleanup-and-normalization" class="level3" data-number="3.1.3">
+<h3 data-number="3.1.3" class="anchored" data-anchor-id="text-cleanup-and-normalization"><span class="header-section-number">3.1.3</span> Text Cleanup and Normalization</h3>
+<p>PDFs may introduce artifacts or inconsistencies that can affect the quality of the extracted text. To ensure the accuracy of question answering, perform text cleanup and normalization:</p>
+<ul>
+<li><strong>Whitespace and Punctuation:</strong> Remove or replace excessive whitespace and special characters to enhance text readability.</li>
+<li><strong>Formatting Removal:</strong> Eliminate unnecessary formatting, such as font styles, sizes, and colors, which may not be relevant for question answering.</li>
+<li><strong>Spellchecking:</strong> Check and correct spelling errors that might occur during the extraction process.</li>
+</ul>
+</section>
+<section id="language-detection" class="level3" data-number="3.1.4">
+<h3 data-number="3.1.4" class="anchored" data-anchor-id="language-detection"><span class="header-section-number">3.1.4</span> Language Detection</h3>
+<p>If your PDF documents include text in multiple languages, it is a good idea to implement language detection algorithms to identify the language used in each section. This information can be useful when selecting appropriate LLM models for question answering.</p>
+</section>
+</section>
+<section id="data-ingestion-pipeline-implementation" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="data-ingestion-pipeline-implementation"><span class="header-section-number">3.2</span> Data Ingestion Pipeline Implementation</h2>
+<p>As it has been depicted in <a href="02_rag.html#fig-rag-data-pipeline">Figure&nbsp;<span>2.3</span></a> the first step of the data ingestion pipeline is <em>extracting and spliting text from the pdf documents</em>. There are several packages for this goal including:</p>
+<ul>
+<li><a href="https://pypdf2.readthedocs.io/en/3.0.0/">PyPDF2</a></li>
+<li><a href="https://pdfminersix.readthedocs.io/en/latest/">pdfminer.six</a></li>
+<li><a href="https://github.com/Unstructured-IO/unstructured">unstructured</a></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you have scanned pdfs, you can utilize libraries such as <strong>unstructured</strong>, <strong>pdf2image</strong> and <strong>pytesseract</strong>.</p>
+</div>
+</div>
+<p>Additionally, there are data loaders hub like <a href="https://llamahub.ai/">llamahub</a> that contains tens of data loaders for reading and connecting a wide variety data sources to a Large Language Model (LLM).</p>
+<p>Finally, there are packages like <a href="https://gpt-index.readthedocs.io/en/stable/index.html">llamaindex</a>, and <a href="https://python.langchain.com/docs/get_started/introduction">langchain</a>. These are frameworks that faciliates developing applications powered by LLMs. Therefore, they have implemented many of these data loaders including extracting and spliting text from pdf files.</p>
+<p><strong>Step 1: Install necessary libraries</strong></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install llama<span class="op">-</span>index</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pip install langchain</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Step 2: Load the pdf file and extract the text from it</strong></p>
+<p>Code below will iterate over the pages of the pdf file, extract the text and add it to the <code>documents</code> list object, see <a href="#fig-load-pdf">Figure&nbsp;<span>3.1</span></a>.</p>
+<div id="fig-load-pdf" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/load_pdf.png" class="img-fluid figure-img" alt="Load pdf files"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.1: Load pdf files</figcaption>
+</figure>
+</div>
+<!-- ```python
+from PyPDF2 import PdfReader
+
+PDF_PATH = 'ml_interview.pdf'
+
+# Load the pdf file
+reader = PdfReader(PDF_PATH)
+
+# Get all the pages of the pdf
+pages = reader.pages
+documents = []
+
+for page in pages:
+    documents.append(page.extract_text())
+```
+We can see the output of the first page:
+```python
+# Print(Output) of the first item (page)
+documents[0]
+``` -->
+<p>Now every page has become a separate document that we can later <em>embed (vectorize)</em> and <em>store</em> in the vector database. However, some pages could be very lengthy and other ones could be very short as page length varies. This could signaficantly impact the quality of the document search and retrieval.</p>
+<p>Additionally, LLMs have a limited context window (token limit), i.e.&nbsp;they can handle certain number of tokens (a token roughly equals to a word). Therefore, we instead first concatenate all the pages into a long text document and then split that document into smaller reletively equal size chunks. We then embed each chunk of text and insert into the vector database.</p>
+<p>Nevertheless, since we are going to use <code>llamaindex</code> and <code>langchain</code> frameworks for the RAG pipeline, Let’s utilize the features and functions these frameworks offer. They have data loaders and splitters that we can use to read and split pdf files. You can see the code in <a href="#fig-langchain-dataloader">Figure&nbsp;<span>3.2</span></a>.</p>
+<div id="fig-langchain-dataloader" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_data_loader.png" class="img-fluid figure-img" alt="Langchain data loader"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.2: Langchain data loader</figcaption>
+</figure>
+</div>
+<!-- ```python
+from langchain.document_loaders import PDFMinerLoader
+
+loader = PDFMinerLoader(PDF_PATH)
+pdf_content = loader.load()
+``` -->
+<p><code>pdf_content[0]</code> contains the entire content of pdf, and has s special structure. It is a <code>Document</code> object with some properties including <code>page_content</code> and <code>metadata</code>. <code>page_content</code> is the textual content and <code>metadata</code> contains some metadata about the pdf. Here’s the partial output the <code>Document</code> object of our pdf in <a href="#fig-langchain-dataloader-output">Figure&nbsp;<span>3.3</span></a>.</p>
+<div id="fig-langchain-dataloader-output" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_data_loader_output.png" class="img-fluid figure-img" alt="Langchain data loader output"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.3: Langchain data loader output</figcaption>
+</figure>
+</div>
+<!-- ```python
+Document(page_content='41 Essential Machine \nLearning Interview \nQuesti...., metadata={'source': 'ml_interview.pdf'})
+``` -->
+<p>A <code>Document</code> object is a generic class for storing a piece of unstructured text and its associated metadata. See <a href="https://api.python.langchain.com/en/latest/schema/langchain.schema.document.Document.html#langchain.schema.document.Document">here</a> for more information.</p>
+<!-- Therefore, we use the functions provided by these framework to create a list of `Document` objects rather than simply a list of texts.
+
+::: {.cell execution_count=1}
+``` {.python .cell-code}
+from pathlib import Path
+from llama_index import download_loader
+from IPython.display import JSON
+import json
+
+PDF_PATH = "ml_interview.pdf"
+
+# Initiate the PDF file loader
+PDFMinerReader = download_loader("PDFMinerReader")
+loader = PDFMinerReader()
+
+# Load the file and create a list of Document objects
+documents = loader.load_data(file=Path(PDF_PATH))
+```
+:::
+
+
+Here's the output of first item in the `Document` list:
+
+```python
+Document(id_='0bb608ca-e7cc-4886-af24-38efc022feb4', embedding=None, metadata={'page_label': 0, 'file_name': 'ml_interview.pdf'}, excluded_embed_metadata_keys=[], excluded_llm_metadata_keys=[], relationships={}, hash='14fbeb45b7052f60f4eaa59688fa276dbf3dc1ed580a92911e1ceb7e389de0fe', text='41 Essential Machine \nLearning Interview \nQuestions\n\nwww.springboard.com\n\n18 mins read\n\n', start_char_idx=None, end_char_idx=None, text_template='{metadata_str}\n\n{content}', metadata_template='{key}: {value}', metadata_seperator='\n')
+```
+
+As you notice, each `Document` object has several attributes. Important properties are `id_`, `text`, and `metadata`. -->
+<p><strong>Step 3: Split the text into smaller chunks</strong></p>
+<p>There are several different text splitters. For more information see <a href="https://api.python.langchain.com/en/latest/api_reference.html#module-langchain.text_splitter">langchain API</a>, or <a href="https://docs.llamaindex.ai/en/stable/examples/low_level/oss_ingestion_retrieval.html#use-a-text-splitter-to-split-documents">llamaIndex documentation</a>. Two common ones are:</p>
+<ol type="i">
+<li><code>CharacterTextSplitter</code>: Split text based on a certain number characters.</li>
+<li><code>TokenTextSplitter</code>: Split text to tokens using model tokenizer.</li>
+</ol>
+<p>The following code in <a href="#fig-langchain-text-split">Figure&nbsp;<span>3.4</span></a> chunks the pdf content into sizes no greater than 1000, with a bit of overlap to allow for some continued context.</p>
+<div id="fig-langchain-text-split" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_text_split.png" class="img-fluid figure-img" alt="Langchain text split method"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.4: Langchain text split method</figcaption>
+</figure>
+</div>
+<!-- 
+```python
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter
+
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 30
+
+text_splitter = CharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+docs = text_splitter.split_documents(pdf_content)
+``` -->
+<p>Here’s the number of chunks created from splitting the pdf file.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the number of chunks (list of Document objects)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(docs))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 30</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Step 4: Embed and store the documents in the vector database</strong></p>
+<p>In this step we need to convert chunks of text into embedding vectors. There are plenty of embedding models we can use including OpenAI models, Huggingface models, and Cohere models. You can even define your own custom embedding model. Selecting an embedding model depnds on several factors:</p>
+<ul>
+<li><strong>Cost:</strong> Providers such as OpenAI or Cohere charge for embeddings, albeit it’s cheap, when you scale to thusands of pdf files, it will become prohibitive.</li>
+<li><strong>Latency and speed:</strong> Hosting an embedding model on your server reduce the latency, whereas using vendors’ API increases the latency.</li>
+<li><strong>Convenience:</strong> Using your own embedding model needs more compute resource and maintainance whereas using vendors APIs like OpenAI gives you a hassle-free experience.</li>
+</ul>
+<p>Similar to having several choices for embedding models, there are so many options for choosing a vector database, which is out the scope of this book.</p>
+<p><a href="#fig-vector-db1">Figure&nbsp;<span>3.5</span></a> shows some of the most popular vector database vendors and some of the features of their hosting. This <a href="https://thedataquarry.com/posts/vector-db-1/">blog</a> fully examines these vector databases from different perspective.</p>
+<div id="fig-vector-db1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/vector_db_1.png" class="img-fluid figure-img" alt="vector databases"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.5: Various vector databases. <a href="https://thedataquarry.com/posts/vector-db-1/">Image source</a></figcaption>
+</figure>
+</div>
+<p>We are going to use OpenAI models, particularly <code>text-embedding-ada-002</code> for embedding. Furthermore, we choose <a href="https://qdrant.tech/">Qdrant</a> as our vector database. It’s open source, fast, very flexible, and offers a free clould-based tier.</p>
+<p>We first install the <code>openai</code> and <code>qdrant</code> package.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install openai</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install qdrant-client</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>We also require an API key that we can get it from <a href="https://platform.openai.com/account/api-keys">here</a>.</p>
+<p>If we set <code>OPENAI_API_KEY</code> environment variable to our API key, we can easily call the functions that needs it without getting any error. Otherwise we can pass the API key parameter to functions requiring it. <a href="#fig-langchain-qdrant-setup">Figure&nbsp;<span>3.6</span></a> shows how to do it.</p>
+<div id="fig-langchain-qdrant-setup" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_qdrant_setup.png" class="img-fluid figure-img" alt="Qdrant vector database setup via Langchain"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.6: Qdrant vector database setup via Langchain</figcaption>
+</figure>
+</div>
+<!-- ```python
+# Set the environment variable
+OPENAI_API_KEY = 'YOUR API KEY'
+os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Qdrant
+
+# initialize OpenAIEmbedding
+embeddings = OpenAIEmbeddings(model='text-embedding-ada-002')
+
+# If not set OPENAI_API_KEY environment variable use this
+# embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, model='text-embedding-ada-002')
+
+# Create a qdrant client, embed documents and insert them into the qdrant vector database
+qdrant = Qdrant.from_documents(
+    docs,
+    embeddings,
+    path="/tmp/local_qdrant",  # Location to store the vector database Index
+    collection_name="my_documents",
+    force_recreate=True,  # Force to override the collection if exists
+)
+``` -->
+<p>Please note that there are several different ways to achieve the same goal (embedding and storing in the vector database). You can use <code>Qdrant</code> client library directly instead of using the langchain wrapper for it. Also, you can first create embeddings separately and then store them in the Qdrant vector database. Here, we embedded the documents and stored them all by calling <code>Qdrant.from_documents()</code>.</p>
+<p>In addition, you can use Qdrant cloud vector database to store the embeddings and use their REST API to interact with it, unlike this example where the index is stored locally in the <code>/tmp/local_qdrant</code> directory. This approach is suitable for testing and POC (Proof-Of-Concept), not for production environment.</p>
+<p>We can try and see how we can search and retrieve relevant documents from the vector database. For instance, let’s see what the answer to the question <em>“what is knearest neighbor?”</em>. See the output in <a href="#fig-langchain-query-example">Figure&nbsp;<span>3.7</span></a>.</p>
+<div id="fig-langchain-query-example" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_query_example.png" class="img-fluid figure-img" alt="Question answering example with output"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.7: Question answering example with output</figcaption>
+</figure>
+</div>
+<!-- ```python
+query = "what is knearest neighbor?"
+
+# Retrieve the top-2 relevant documents from the vector database
+found_docs = qdrant.similarity_search(query, k=2)
+
+# Print the first returned document
+print(found_docs[0].page_content)
+# OUTPUT
+# More reading: How is the k-nearest neighbor algorithm different from k-means clustering? (Quora) K-Nearest Neighbors is a supervised classification algorithm, while the 
+# mechanisms may seem similar at first, what this really means is that in order for K-Nearest Neighbors to work, you need labeled data you want to classify an unlabeled point into
+# (thus the nearest neighbor part). K-means clustering requires only a set of unlabeled points and a threshold: the algorithm will take unlabeled points and gradually 
+# learn how to cluster them into groups by computing the mean of the distance between different points.The critical difference here is that KNN needs labeled points and is 
+# thus supervised learning, while k-means doesn’t — and is thus unsupervised learning.Q4- Explain how a ROC curve works.More reading: Receiver operating characteristic (Wikipedia)
+# k-means clustering is an unsupervised
+``` -->
+<p>Awesome! The retrieved answer seems quite relevant.</p>
+<p>The entire code is displayed in <a href="#fig-langchain-query-retrieval-fullcode">Figure&nbsp;<span>3.8</span></a>.</p>
+<div id="fig-langchain-query-retrieval-fullcode" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_query_retrieval_fullcode.png" class="img-fluid figure-img" alt="The entire code for retrieval component"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.8: The entire code for retrieval component</figcaption>
+</figure>
+</div>
+<!-- ```python
+from langchain.document_loaders import TextLoader, PDFMinerLoader
+from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Qdrant
+
+PDF_PATH = 'ml_interview.pdf'
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 30
+
+loader = PDFMinerLoader(PDF_PATH)
+pdf_content = loader.load()
+
+text_splitter = CharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+docs = text_splitter.split_documents(pdf_content)
+
+# initialize OpenAIEmbedding
+embeddings = OpenAIEmbeddings(model='text-embedding-ada-002')
+
+# If not set OPENAI_API_KEY environment variable use this
+# embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, model='text-embedding-ada-002')
+
+# Create a qdrant client
+qdrant = Qdrant.from_documents(
+    docs,
+    embeddings,
+    path="/tmp/local_qdrant",  # Location to store the vector database Index
+    collection_name="my_documents",
+    force_recreate=True,  # Force to override the collection if exists
+)
+
+query = "what is knearest neighbor?"
+found_docs = qdrant.similarity_search(query)
+
+# Print the first returned document
+print(found_docs[0].page_content)
+``` -->
+</section>
+<section id="generation-component-implementation" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="generation-component-implementation"><span class="header-section-number">3.3</span> Generation Component Implementation</h2>
+<p><a href="#fig-rag-pipeline-simplified">Figure&nbsp;<span>3.9</span></a> illustrates a simplified version of the RAG pipeline we saw in <a href="02_rag.html"><span>Chapter&nbsp;2</span></a>. So far our <strong>Retrieval</strong> component of the RAG is implemented. In the next section we will implement the <strong>Generation</strong> component.</p>
+<div id="fig-rag-pipeline-simplified" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/rag_pipeline_simplified.png" class="img-fluid figure-img" alt="rag pipeline"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.9: RAG pipeline</figcaption>
+</figure>
+</div>
+<p>The steps for generating a response for a user’s question are:</p>
+<ul>
+<li><strong>Step 1:</strong> Embed the user’s query using the same model used for embedding documents</li>
+<li><strong>Step 2:</strong> Pass the query embedding to vector database, search and retrieve the top-k documents (i.e.&nbsp;context) from the vector database</li>
+<li><strong>Step 3:</strong> Create a “prompt” and include the user’s query and context in it</li>
+<li><strong>Step 4:</strong> Call the LLM and pass the the prompt</li>
+<li><strong>Step 5:</strong> Get the generated response from LLM and display it to the user</li>
+</ul>
+<p>Again, we can follow each step one by one, or utilize the features langchain or llamaIndex provide. We are going to use langchain in this case.</p>
+<p>Langchain includes <a href="https://api.python.langchain.com/en/latest/api_reference.html#module-langchain.chains">several kinds</a> of built-in question-answering chains. A <em>chain</em> in LangChain refers to a sequence of calls to components, which can include other chains or external tools. In order to create a question answering chain, we use:</p>
+<ol type="1">
+<li><p><strong>load_qa_chain:</strong> <code>load_qa_chain()</code> is a function in Langchain that loads a pre-configured question answering chain. It takes in a language model like OpenAI, a chain type (e.g.&nbsp;“stuff” for extracting answers from text), and optionally a prompt template and memory object. The function returns a <code>QuestionAnsweringChain</code> instance that is ready to take in documents and questions to generate answers.</p></li>
+<li><p><strong>load_qa_with_sources_chain:</strong> This is very similar to <code>load_qa_chain</code> except it contains sources/metadata along with the returned response.</p></li>
+<li><p><strong>RetrievalQA:</strong> <code>RetrievalQA</code> is a class in Langchain that creates a question answering chain using retrieval. It combines a retriever, prompt template, and LLM together into an end-to-end QA pipeline. The prompt template formats the question and retrieved documents into a prompt for the LLM. This chain retrieves relevant documents from a vector database for a given query, and then generates an answer using those documents.</p></li>
+<li><p><strong>RetrievalQAWithSourcesChain:</strong> It is a variant of RetrievalQA that returns relevant source documents used to generate the answer. This chain returns an <code>AnswerWithSources</code> object containing the answer string and a list of source IDs.</p></li>
+</ol>
+<p>Here’s the code demonstraing the implementation, <a href="#fig-langchain-response-generation">Figure&nbsp;<span>3.10</span></a>:</p>
+<div id="fig-langchain-response-generation" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/langchain_response_generation.png" class="img-fluid figure-img" alt="Response generation using Langchain chain"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.10: Response generation using Langchain chain</figcaption>
+</figure>
+</div>
+<!-- ```python
+from langchain.chains.question_answering import load_qa_chain
+from langchain.llms import OpenAI
+
+# Create the QA chain
+chain = load_qa_chain(ChatOpenAI(temperature=0), chain_type="stuff")
+
+query = "what is knearest neighbor?"
+found_docs = qdrant.similarity_search(query)
+
+# Pass the retrieved documents from vector database, and the query
+answer = chain.run(input_documents=found_docs, question=query)
+``` -->
+<!-- And the generated answer:
+```python
+K-Nearest Neighbors (KNN) is a supervised machine learning algorithm used for classification and regression. It works by finding the k-nearest data points in the training set for a given data point and then using the labels of those data points to predict the label of the given data point.
+``` -->
+<p><a href="#fig-load-qa-with-resource-chain">Figure&nbsp;<span>3.11</span></a> shows how to use <code>load_qa_with_sources_chain</code>:</p>
+<div id="fig-load-qa-with-resource-chain" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/load_qa_with_sources_chain.png" class="img-fluid figure-img" alt="Using `load_qa_with_sources_chain` chain for response generation"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.11: Using <code>load_qa_with_sources_chain</code> chain for response generation</figcaption>
+</figure>
+</div>
+<!-- ```python
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+
+chain = load_qa_with_sources_chain(ChatOpenAI(temperature=0.2, 
+                                    model_name='gpt-3.5-turbo'), 
+                                    chain_type="stuff")
+query = "what is knearest neighbor?"
+answer = chain({"input_documents": found_docs, "question": query}, return_only_outputs=True)
+answer
+```
+And the answer is:
+```python
+{'output_text': 'The k-nearest neighbor algorithm is a supervised classification algorithm that requires labeled data to classify an unlabeled point into a specific category. It works by finding the nearest neighbors to the unlabeled point based on a distance metric. On the other hand, k-means clustering is an unsupervised clustering algorithm that groups unlabeled points into clusters based on their similarity. It does not require labeled data and instead computes the mean distance between different points to form clusters. \n\nSOURCES: ml_interview.pdf'}
+``` -->
+<p>Similarly, if we use <code>RetrievalQA</code>, we will have <a href="#fig-retrieval-qa">Figure&nbsp;<span>3.12</span></a>:</p>
+<div id="fig-retrieval-qa" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/retrieval_qa.png" class="img-fluid figure-img" alt="The usage of `RetrievalQA` chain` chain for response generation"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.12: The usage of <code>RetrievalQA</code> chain</figcaption>
+</figure>
+</div>
+<!-- ```python
+from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQAWithSourcesChain
+
+qa=RetrievalQA.from_chain_type(llm=ChatOpenAI(temperature=0.2,
+                                model_name='gpt-3.5-turbo'), chain_type="stuff", 
+                                retriever=qdrant.as_retriever())
+answer = qa.run(query)
+print(answer)
+# K-nearest neighbor (KNN) is a supervised classification algorithm. It is used to classify an unlabeled data point by finding the K nearest labeled data points in the training set and assigning the majority label among those neighbors to the unlabeled point. In other words, KNN determines the class of a data point based on the classes of its nearest neighbors.
+``` -->
+<p>And here’s the code when we use <code>RetrievalQAWithSourcesChain</code>, <a href="#fig-retrieval-qa-with-resource">Figure&nbsp;<span>3.13</span></a>:</p>
+<div id="fig-retrieval-qa-with-resource" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/retrieval_qa_with_resource.png" class="img-fluid figure-img" alt="Code snippet for using Langchain `RetrievalQAWithSourcesChain`"></p>
+<figcaption class="figure-caption">Figure&nbsp;3.13: Code snippet for using Langchain <code>RetrievalQAWithSourcesChain</code> for response generation</figcaption>
+</figure>
+</div>
+<!-- ```python
+chain=RetrievalQAWithSourcesChain.from_chain_type
+    (ChatOpenAI(temperature=0.2, model_name='gpt-3.5-turbo'),
+    chain_type="stuff", retriever=qdrant.as_retriever())
+
+
+answer = chain({"question": query}, return_only_outputs=True)
+print(answer)
+# {'answer': 'The k-nearest neighbor algorithm is a supervised
+#  classification algorithm that requires labeled data 
+# to classify an unlabeled point into a specific category.
+#  It works by finding the nearest neighbors to the unlabeled
+#  point based on a distance metric. On the other hand, 
+# k-means clustering is an unsupervised clustering algorithm 
+# that groups unlabeled points into clusters based on their 
+# similarity. It does not require labeled data and instead 
+# computes the mean distance between different points to form 
+# clusters. The key difference is that k-nearest neighbors is 
+# supervised learning, while k-means clustering is unsupervised 
+# learning.\n', 'sources': 'ml_interview.pdf'}
+``` -->
+<p>As you can see, it’s fairly straight forward to implement RAG (or say a prototype RAG application) using frameworks like langchain or llamaIndex. However, when it comes to deploying RAG to production and scaling the system, it becomes notoriously challenging. There are a lot of nuances that will affect the quality of the RAG, and we need to take them into consideration. We will discuss some of the main challenges and how to address them in the next few sections.</p>
+</section>
+<section id="impact-of-text-splitting-on-retrieval-augmented-generation-rag-quality" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="impact-of-text-splitting-on-retrieval-augmented-generation-rag-quality"><span class="header-section-number">3.4</span> Impact of Text Splitting on Retrieval Augmented Generation (RAG) Quality</h2>
+<p>In the context of building a Chat-to-PDF app using Large Language Models (LLMs), one critical aspect that significantly influences the quality of your Retrieval Augmented Generation (RAG) system is how you split text from PDF documents. Text splitting can be done at two levels: <em>splitting by character</em> and <em>splitting by token</em>. The choice you make between these methods can have a profound impact on the effectiveness of your RAG system. Let’s delve into the implications of each approach.</p>
+<section id="splitting-by-character" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="splitting-by-character"><span class="header-section-number">3.4.1</span> Splitting by Character</h3>
+<section id="advantages" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="advantages">Advantages:</h4>
+<p><strong>Fine-Grained Context:</strong> Splitting text by character retains the finest granularity of context within a document. Each character becomes a unit of input, allowing the model to capture minute details.</p>
+</section>
+<section id="challenges" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="challenges">Challenges:</h4>
+<ul>
+<li><strong>Long Sequences:</strong> PDF documents often contain long paragraphs or sentences. Splitting by character can result in extremely long input sequences, which may surpass the model’s maximum token limit, making it challenging to process and generate responses.</li>
+<li><strong>Token Limitations:</strong> Most LLMs, such as GPT-3, have token limits, often around 4,000 tokens. If a document exceeds this limit, you’ll need to truncate or omit sections, potentially losing valuable context.</li>
+<li><strong>Increased Inference Time:</strong> Longer sequences require more inference time, which can lead to slower response times and increased computational costs.</li>
+</ul>
+</section>
+</section>
+<section id="splitting-by-token" class="level3" data-number="3.4.2">
+<h3 data-number="3.4.2" class="anchored" data-anchor-id="splitting-by-token"><span class="header-section-number">3.4.2</span> Splitting by Token</h3>
+<section id="advantages-1" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="advantages-1">Advantages:</h4>
+<ul>
+<li><strong>Token Efficiency:</strong> Splitting text by token ensures that each input sequence remains within the model’s token limit, allowing for efficient processing.</li>
+<li><strong>Balanced Context:</strong> Each token represents a meaningful unit, striking a balance between granularity and manageability.</li>
+<li><strong>Scalability:</strong> Splitting by token accommodates documents of varying lengths, making the system more scalable and adaptable.</li>
+</ul>
+</section>
+<section id="challenges-1" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="challenges-1">Challenges:</h4>
+<ul>
+<li><strong>Contextual Information:</strong> Token-based splitting may not capture extremely fine-grained context, potentially missing nuances present in character-level splitting.</li>
+</ul>
+</section>
+</section>
+<section id="finding-the-right-balance" class="level3" data-number="3.4.3">
+<h3 data-number="3.4.3" class="anchored" data-anchor-id="finding-the-right-balance"><span class="header-section-number">3.4.3</span> Finding the Right Balance</h3>
+<p>The choice between character-level and token-level splitting is not always straightforward and may depend on several factors:</p>
+<ul>
+<li><strong>Document Types:</strong> Consider the types of PDF documents in your collection. Technical manuals with precise details may benefit from character-level splitting, while general documents could work well with token-level splitting.</li>
+<li><strong>Model Limitations:</strong> Take into account the token limits of your chosen LLM. If the model’s limit is a significant constraint, token-level splitting becomes a necessity.</li>
+<li><strong>User Experience:</strong> Assess the trade-off between detailed context and response time. Character-level splitting might provide richer context but at the cost of slower responses.</li>
+</ul>
+</section>
+<section id="hybrid-approaches" class="level3" data-number="3.4.4">
+<h3 data-number="3.4.4" class="anchored" data-anchor-id="hybrid-approaches"><span class="header-section-number">3.4.4</span> Hybrid Approaches</h3>
+<p>In practice, you can also explore hybrid approaches to text splitting. For instance, you might use token-level splitting for most of the document and switch to character-level splitting when a specific question requires fine-grained context.</p>
+<p>The impact of text splitting on RAG quality cannot be overstated. It’s a critical design consideration that requires a balance between capturing detailed context and ensuring system efficiency. Carefully assess the nature of your PDF documents, the capabilities of your chosen LLM, and user expectations to determine the most suitable text splitting strategy for your Chat-to-PDF app. Regular testing and user feedback can help refine this choice and optimize the overall quality of your RAG system.</p>
+</section>
+</section>
+<section id="impact-of-metadata-in-the-vector-database-on-retrieval-augmented-generation-rag" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="impact-of-metadata-in-the-vector-database-on-retrieval-augmented-generation-rag"><span class="header-section-number">3.5</span> Impact of Metadata in the Vector Database on Retrieval Augmented Generation (RAG)</h2>
+<p>The inclusion of metadata about the data stored in the vector database is another factor that can significantly enhance the quality and effectiveness of your Retrieval Augmented Generation (RAG) system. Metadata provides valuable contextual information about the PDF documents, making it easier for the RAG model to retrieve relevant documents and generate accurate responses. Here, we explore the ways in which metadata can enhance your RAG system.</p>
+<section id="contextual-clues" class="level3" data-number="3.5.1">
+<h3 data-number="3.5.1" class="anchored" data-anchor-id="contextual-clues"><span class="header-section-number">3.5.1</span> Contextual Clues</h3>
+<p>Metadata acts as contextual clues that help the RAG model better understand the content and context of each PDF document. Typical metadata includes information such as:</p>
+<ul>
+<li><strong>Document Title:</strong> The title often provides a high-level summary of the document’s content.</li>
+<li><strong>Author:</strong> Knowing the author can offer insights into the document’s perspective and expertise.</li>
+<li><strong>Keywords and Tags:</strong> Keywords and tags can highlight the main topics or themes of the document.</li>
+<li><strong>Publication Date:</strong> The date of publication provides a temporal context, which is crucial for understanding the relevance of the document.</li>
+<li><strong>Document Type:</strong> Differentiating between research papers, user manuals, and other types of documents can aid in tailoring responses appropriately.</li>
+</ul>
+</section>
+<section id="improved-document-retrieval" class="level3" data-number="3.5.2">
+<h3 data-number="3.5.2" class="anchored" data-anchor-id="improved-document-retrieval"><span class="header-section-number">3.5.2</span> Improved Document Retrieval</h3>
+<p>With metadata available in the vector database, the retrieval component of your RAG system can become more precise and efficient. Here’s how metadata impacts document retrieval:</p>
+<ul>
+<li><strong>Relevance Ranking:</strong> Metadata, such as document titles, keywords, and tags, can be used to rank the documents based on relevance to a user query. Documents with metadata matching the query can be given higher priority during retrieval. For example, if a user asks a question related to “machine learning,” documents with “machine learning” in their keywords or tags might be given priority during retrieval.</li>
+<li><strong>Filtering:</strong> Metadata can be used to filter out irrelevant documents early in the retrieval process, reducing the computational load and improving response times. For instance, if a user asks about “biology,” documents with metadata indicating they are engineering manuals can be excluded from consideration.</li>
+<li><strong>Enhanced Query Understanding:</strong> Metadata provides additional context for the user’s query, allowing the RAG model to better understand the user’s intent and retrieve documents that align with that intent. For example, if the metadata includes the publication date, the RAG model can consider the temporal context when retrieving documents.</li>
+</ul>
+</section>
+<section id="contextual-response-generation" class="level3" data-number="3.5.3">
+<h3 data-number="3.5.3" class="anchored" data-anchor-id="contextual-response-generation"><span class="header-section-number">3.5.3</span> Contextual Response Generation</h3>
+<p>Metadata can also play a crucial role in the generation component of your RAG system. Here’s how metadata impacts response generation:</p>
+<ul>
+<li><strong>Context Integration:</strong> Metadata can be incorporated into the response generation process to provide more contextually relevant answers. For example, including the publication date when answering a historical question.</li>
+<li><strong>Customization:</strong> Metadata can enable response customization. For instance, the tone and style of responses can be adjusted based on the author’s information.</li>
+<li><strong>Enhanced Summarization:</strong> Metadata can aid in the summarization of retrieved documents, allowing the RAG model to provide concise and informative responses. For instance, if the metadata includes the document type as “research paper,” the RAG system can generate a summary that highlights the key findings or contributions of the paper.</li>
+</ul>
+</section>
+<section id="user-experience-and-trust" class="level3" data-number="3.5.4">
+<h3 data-number="3.5.4" class="anchored" data-anchor-id="user-experience-and-trust"><span class="header-section-number">3.5.4</span> User Experience and Trust</h3>
+<p>Including metadata in the RAG system not only enhances its technical capabilities but also improves the overall user experience. Users are more likely to trust and find value in a system that provides contextually relevant responses. Metadata can help build this trust by demonstrating that the system understands and respects the nuances of the user’s queries.</p>
+<p>Overall, incorporating metadata about data in the vector database of your Chat-to-PDF app’s RAG system can significantly elevate its performance and user experience. Metadata acts as a bridge between the user’s queries and the content of PDF documents, facilitating more accurate retrieval and generation of responses.</p>
+<p>As we conclude our exploration of the nuts and bolts of RAG pipelines in this Chapter, it’s time to move on to more complex topics. In Chapter 4, we’ll take a deep dive and try to address some of the retrieval and generation challenges that come with implementing advanced RAG systems.</p>
+<p>We’ll discuss the optimal chunk size for efficient retrieval, consider the balance between context and efficiency, and introduce additional resources for evaluating RAG performance. Furthermore, we’ll explore retrieval chunks versus synthesis chunks and ways to embed references to text chunks for better understanding.</p>
+<p>We’ll also investigate how to rethink retrieval methods for heterogeneous document corpora, delve into hybrid document retrieval, and examine the role of query rewriting in enhancing RAG capabilities.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./02_rag.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Retrieval Augmented Generation (RAG)</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./04_advanced_rag.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

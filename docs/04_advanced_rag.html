@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>A Practical Approach to Retrieval Augmented Generation Systems - 4&nbsp; From Simple to Advanced RAG</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./05_observability_tools.html" rel="next">
+<link href="./03_prepare_data.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04_advanced_rag.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">A Practical Approach to Retrieval Augmented Generation Systems</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/mallahyari/chat2docs" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_rag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Retrieval Augmented Generation (RAG)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_prepare_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04_advanced_rag.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05_observability_tools.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">4.1</span> Introduction</a>
+  <ul class="collapse">
+  <li><a href="#retrieval-challenges" id="toc-retrieval-challenges" class="nav-link" data-scroll-target="#retrieval-challenges">Retrieval Challenges</a></li>
+  <li><a href="#generation-challenges" id="toc-generation-challenges" class="nav-link" data-scroll-target="#generation-challenges">Generation Challenges</a></li>
+  <li><a href="#what-can-be-done" id="toc-what-can-be-done" class="nav-link" data-scroll-target="#what-can-be-done">What Can be done</a></li>
+  </ul></li>
+  <li><a href="#optimul-chunk-size-for-efficient-retrieval" id="toc-optimul-chunk-size-for-efficient-retrieval" class="nav-link" data-scroll-target="#optimul-chunk-size-for-efficient-retrieval"><span class="header-section-number">4.2</span> Optimul Chunk Size for Efficient Retrieval</a>
+  <ul class="collapse">
+  <li><a href="#balance-between-context-and-efficiency" id="toc-balance-between-context-and-efficiency" class="nav-link" data-scroll-target="#balance-between-context-and-efficiency"><span class="header-section-number">4.2.1</span> Balance Between Context and Efficiency</a></li>
+  <li><a href="#additional-resources-for-rag-evaluation" id="toc-additional-resources-for-rag-evaluation" class="nav-link" data-scroll-target="#additional-resources-for-rag-evaluation"><span class="header-section-number">4.2.2</span> Additional Resources for RAG Evaluation</a></li>
+  </ul></li>
+  <li><a href="#retrieval-chunks-vs.-synthesis-chunks" id="toc-retrieval-chunks-vs.-synthesis-chunks" class="nav-link" data-scroll-target="#retrieval-chunks-vs.-synthesis-chunks"><span class="header-section-number">4.3</span> Retrieval Chunks vs.&nbsp;Synthesis Chunks</a>
+  <ul class="collapse">
+  <li><a href="#sec-document-summary-sec" id="toc-sec-document-summary-sec" class="nav-link" data-scroll-target="#sec-document-summary-sec"><span class="header-section-number">4.3.1</span> Embed References to Text Chunks</a></li>
+  <li><a href="#step-1-read-the-pdf-file" id="toc-step-1-read-the-pdf-file" class="nav-link" data-scroll-target="#step-1-read-the-pdf-file">Step 1: Read the PDF file</a></li>
+  <li><a href="#step-2-create-document-summary-index" id="toc-step-2-create-document-summary-index" class="nav-link" data-scroll-target="#step-2-create-document-summary-index">Step 2: Create Document Summary Index</a></li>
+  <li><a href="#step-3-retrieve-and-generate-response-using-document-summary-index" id="toc-step-3-retrieve-and-generate-response-using-document-summary-index" class="nav-link" data-scroll-target="#step-3-retrieve-and-generate-response-using-document-summary-index">Step 3: Retrieve and Generate Response using Document Summary Index</a></li>
+  <li><a href="#expand-sentence-level-context-window" id="toc-expand-sentence-level-context-window" class="nav-link" data-scroll-target="#expand-sentence-level-context-window"><span class="header-section-number">4.3.2</span> Expand sentence-level context window</a></li>
+  <li><a href="#implementation" id="toc-implementation" class="nav-link" data-scroll-target="#implementation">Implementation</a></li>
+  <li><a href="#lost-in-the-middle-problem" id="toc-lost-in-the-middle-problem" class="nav-link" data-scroll-target="#lost-in-the-middle-problem"><span class="header-section-number">4.3.3</span> Lost in the Middle Problem</a></li>
+  <li><a href="#embedding-optimization" id="toc-embedding-optimization" class="nav-link" data-scroll-target="#embedding-optimization"><span class="header-section-number">4.3.4</span> Embedding Optimization</a></li>
+  </ul></li>
+  <li><a href="#rethinking-retrieval-methods-for-heterogeneous-document-corpora" id="toc-rethinking-retrieval-methods-for-heterogeneous-document-corpora" class="nav-link" data-scroll-target="#rethinking-retrieval-methods-for-heterogeneous-document-corpora"><span class="header-section-number">4.4</span> Rethinking Retrieval Methods for Heterogeneous Document Corpora</a>
+  <ul class="collapse">
+  <li><a href="#how-metadata-can-help" id="toc-how-metadata-can-help" class="nav-link" data-scroll-target="#how-metadata-can-help"><span class="header-section-number">4.4.1</span> How metadata can help</a></li>
+  </ul></li>
+  <li><a href="#hybrid-document-retrieval" id="toc-hybrid-document-retrieval" class="nav-link" data-scroll-target="#hybrid-document-retrieval"><span class="header-section-number">4.5</span> Hybrid Document Retrieval</a></li>
+  <li><a href="#query-rewriting-for-retrieval-augmented-large-language-models" id="toc-query-rewriting-for-retrieval-augmented-large-language-models" class="nav-link" data-scroll-target="#query-rewriting-for-retrieval-augmented-large-language-models"><span class="header-section-number">4.6</span> Query Rewriting for Retrieval-Augmented Large Language Models</a>
+  <ul class="collapse">
+  <li><a href="#leveraging-large-language-models-llms-for-query-rewriting-in-rags" id="toc-leveraging-large-language-models-llms-for-query-rewriting-in-rags" class="nav-link" data-scroll-target="#leveraging-large-language-models-llms-for-query-rewriting-in-rags"><span class="header-section-number">4.6.1</span> Leveraging Large Language Models (LLMs) for Query Rewriting in RAGs</a></li>
+  </ul></li>
+  <li><a href="#query-routing-in-rag" id="toc-query-routing-in-rag" class="nav-link" data-scroll-target="#query-routing-in-rag"><span class="header-section-number">4.7</span> Query Routing in RAG</a></li>
+  <li><a href="#leveraging-user-history-to-enhance-rag-performance" id="toc-leveraging-user-history-to-enhance-rag-performance" class="nav-link" data-scroll-target="#leveraging-user-history-to-enhance-rag-performance"><span class="header-section-number">4.8</span> Leveraging User History to Enhance RAG Performance</a>
+  <ul class="collapse">
+  <li><a href="#challenge" id="toc-challenge" class="nav-link" data-scroll-target="#challenge"><span class="header-section-number">4.8.1</span> Challenge</a></li>
+  <li><a href="#how-user-history-enhances-rag-performance" id="toc-how-user-history-enhances-rag-performance" class="nav-link" data-scroll-target="#how-user-history-enhances-rag-performance"><span class="header-section-number">4.8.2</span> How User History Enhances RAG Performance</a></li>
+  <li><a href="#how-memoryuser-history-works" id="toc-how-memoryuser-history-works" class="nav-link" data-scroll-target="#how-memoryuser-history-works"><span class="header-section-number">4.8.3</span> How Memory/User History Works</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/mallahyari/chat2docs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From Simple to Advanced RAG</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!-- # Chapter: Deploying RAG Applications in Production -->
+<section id="introduction" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">4.1</span> Introduction</h2>
+<p>As we traverse the path from development to production, the world of Retrieval Augmented Generation (RAG) applications unveils its potential to transform the way we interact with vast collections of information. In the preceding chapters, we’ve laid the groundwork for building RAG systems that can answer questions, provide insights, and deliver valuable content. However, the journey is far from over.</p>
+<p><em>Please note that <a href="https://gpt-index.readthedocs.io/en/stable/index.html">LlamaIndex</a> framework has been used for several of the code implementations in this chapter. This framework also contains a lot of advanced tutorials about RAG that inspired the content of this chapter.</em></p>
+<p>The transition from a well-crafted RAG system in the development environment to a real-world production application is a monumental step, one that demands careful consideration of a myriad of factors and deals with limitations of existing approaches. These considerations ensure your RAG application operates seamlessly in a real-world production environment. There are so many challenges and consideration for building <em>production-ready</em> RAG. Nevertheless, we will discuss some of the primary ones.</p>
+<p>RAG pipeline consists of two components: i) Retrieval and, ii) response generation (synthesis). Each component has its own challenges.</p>
+<section id="retrieval-challenges" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="retrieval-challenges">Retrieval Challenges</h3>
+<ul>
+<li><strong>Low precision:</strong> When retrieving the top-k chunks, there’s a risk of including irrelevant content, potentially leading to issues like hallucination and generating inaccurate responses.</li>
+<li><strong>Low recall:</strong> In certain cases, even when all the relevant chunks are retrieved, the text chunks might lack the necessary global context beyond the retrieved chunks to generate a coherent response.</li>
+<li><strong>Obsolete information:</strong> Ensuring the data remains up-to-date is critical to avoid reliance on obsolete information. Regular updates are essential to maintain data relevance and accuracy.</li>
+</ul>
+</section>
+<section id="generation-challenges" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="generation-challenges">Generation Challenges</h3>
+<ul>
+<li><strong>Hallucination:</strong> The model generates responses that include information not present in the context, potentially leading to inaccuracies or fictional details.</li>
+<li><strong>Irrelevance:</strong> The model produces answers that do not directly address the user’s question, resulting in responses that lack relevance or coherence.</li>
+<li><strong>Bias:</strong> The model generates answers that contai n harmful or offensive content, potentially reflecting biases and undermining user trust and safety.</li>
+</ul>
+</section>
+<section id="what-can-be-done" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="what-can-be-done">What Can be done</h3>
+<p>In order to effectively tackle the challenges in Retrieval Augmented Generation (RAG) systems, several key strategies can be employed:</p>
+<ol type="1">
+<li><p><strong>Data Augmentation:</strong> Can we enrich our dataset by storing supplementary information beyond raw text chunks, such as metadata or structured data, to provide richer context for retrieval and generation processes?</p></li>
+<li><p><strong>Optimized Embeddings:</strong> Can we refine and enhance our embedding representations to capture context more effectively, improve the relevance of retrieved information, and enable more coherent response generation?</p></li>
+<li><p><strong>Advanced Retrieval Techniques:</strong> Can we go beyond basic top-k embedding lookup and implement advanced retrieval methods, such as semantic search, or hybrid search (keyword search + semantic search) to enhance the precision and recall of information retrieval?</p></li>
+<li><p><strong>Multi-Purpose Use of LLMs:</strong> Can we leverage Large Language Models (LLMs) for tasks beyond text generation, such as question answering, summarization, or knowledge graph construction, to augment the capabilities of RAG systems and provide more comprehensive responses to user queries?</p></li>
+</ol>
+<p>Let’s dive in a bit more deeply into aforementioned challenges and propose how to alleiviate each one.</p>
+</section>
+</section>
+<section id="optimul-chunk-size-for-efficient-retrieval" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="optimul-chunk-size-for-efficient-retrieval"><span class="header-section-number">4.2</span> Optimul Chunk Size for Efficient Retrieval</h2>
+<p>The chunk size in a RAG system is the size of the text passages that are extracted from the source text and used to generate the retrieval index. The chunk size has a significant impact on the system’s efficiency and performance in several ways:</p>
+<section id="balance-between-context-and-efficiency" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="balance-between-context-and-efficiency"><span class="header-section-number">4.2.1</span> Balance Between Context and Efficiency</h3>
+<p>The chunk size should strike a balance between providing sufficient context for generating coherent responses (i.e.&nbsp;Relevance and Granularity) and ensuring efficient retrieval and processing (i.e Performance).</p>
+<p>A smaller chunk size results in more granular chunks, which can improve the relevance of the retrieved chunks. However, it is important to note that the most relevant information may not be contained in the top retrieved chunks, especially if the <em>similarity_top_k</em> setting is low (e.g.&nbsp;k=2). A smaller chunk size also results in more chunks, which can increase the system’s memory and processing requirements.</p>
+<p>A larger chunk size can improve the system’s performance by reducing the number of chunks that need to be processed. However, it is important to note that a larger chunk size can also reduce the relevance of the retrieved chunks.</p>
+<p>The optimal chunk size for a RAG system depends on a number of factors, including the size and complexity of the source text, the desired retrieval performance, and the available system resources. However, it is important to experiment with different chunk sizes to find the one that works best for your specific system. But, how do we know what works and what doesn’t?</p>
+<p><strong>Question:</strong> <em>How can we measure the performance of RAG?</em></p>
+<p><strong>Answer:</strong> We have to define evaluation metrics and then use evaluation tools to measure how the RAG performs considering the metrics. There are several tools to evaluate the RAG including LlamaIndex <strong>Response Evaluation</strong> <a href="https://docs.llamaindex.ai/en/stable/optimizing/evaluation/evaluation.html">module</a> to test, evaluate and choose the right <em>chunk size</em>. It contains a few components, particularly:</p>
+<ol type="1">
+<li><strong>Faithfulness Evaluator:</strong> This tool assesses whether the response includes fabricated information and determines if the response aligns with any source nodes from the query engine.</li>
+<li><strong>Relevancy Evaluator:</strong> This tool gauges whether the response effectively addresses the query and evaluates if the combined information from the response and source nodes corresponds to the query.</li>
+</ol>
+<p>The code below shows how to use <em>Evaluation module</em> and determine the optimal <em>chunk size</em> for retrieval. To read the full article, see <a href="https://blog.llamaindex.ai/evaluating-the-ideal-chunk-size-for-a-rag-system-using-llamaindex-6207e5d3fec5">this link</a>.</p>
+<p><a href="#fig-llamaindex-eval-part1">Figure&nbsp;<span>4.1</span></a> shows the data preparation for evaluation module.</p>
+<div id="fig-llamaindex-eval-part1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex_eval_part1.png" class="img-fluid figure-img" alt="data preparation for reponse evaluation"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.1: data preparation for reponse evaluation</figcaption>
+</figure>
+</div>
+<p><a href="#fig-llamaindex-eval-part2">Figure&nbsp;<span>4.2</span></a> displays the criteria to set for evaluation.</p>
+<div id="fig-llamaindex-eval-part2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex_eval_part2.png" class="img-fluid figure-img" alt="Define criteria for evaluation"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.2: Define criteria for evaluation</figcaption>
+</figure>
+</div>
+<p><a href="#fig-llamaindex-eval-part3">Figure&nbsp;<span>4.3</span></a> shows the evaluation function definition.</p>
+<div id="fig-llamaindex-eval-part3" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex_eval_part3.png" class="img-fluid figure-img" alt="Define a function to perform evaluation"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.3: Define a function to perform evaluation</figcaption>
+</figure>
+</div>
+<p>And <a href="#fig-llamaindex-eval-part4">Figure&nbsp;<span>4.4</span></a> demonstrates testing the evaluation function with different chunk sizes.</p>
+<div id="fig-llamaindex-eval-part4" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex_eval_part4.png" class="img-fluid figure-img" alt="Run the evaluation function with different parameters"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.4: Run the evaluation function with different parameters</figcaption>
+</figure>
+</div>
+<!-- ```python
+from llama_index import (
+    SimpleDirectoryReader,
+    VectorStoreIndex,
+    ServiceContext,
+)
+from llama_index.evaluation import (
+    DatasetGenerator,
+    FaithfulnessEvaluator,
+    RelevancyEvaluator
+)
+from llama_index.llms import OpenAI
+
+import openai
+import time
+
+openai.api_key = 'OPENAI-API-KEY'
+
+# Download Data
+!mkdir -p 'data/10k/'
+!wget 'https://raw.githubusercontent.com/jerryjliu/llama_index/main/docs/examples/data/10k/uber_2021.pdf' -O 'data/10k/uber_2021.pdf'
+
+# Load Data
+reader = SimpleDirectoryReader("./data/10k/")
+documents = reader.load_data()
+
+# To evaluate for each chunk size, we will first generate a set of 40 questions from first 20 pages.
+eval_documents = documents[:20]
+data_generator = DatasetGenerator.from_documents()
+eval_questions = data_generator.generate_questions_from_nodes(num = 20)
+
+# We will use GPT-4 for evaluating the responses
+gpt4 = OpenAI(temperature=0, model="gpt-4")
+
+# Define service context for GPT-4 for evaluation
+service_context_gpt4 = ServiceContext.from_defaults(llm=gpt4)
+
+# Define Faithfulness and Relevancy Evaluators which are based on GPT-4
+faithfulness_gpt4 = FaithfulnessEvaluator(service_context=service_context_gpt4)
+relevancy_gpt4 = RelevancyEvaluator(service_context=service_context_gpt4)
+
+# Define function to calculate average response time, average faithfulness and average relevancy metrics for given chunk size
+def evaluate_response_time_and_accuracy(chunk_size):
+    total_response_time = 0
+    total_faithfulness = 0
+    total_relevancy = 0
+
+    # create vector index
+    llm = OpenAI(model="gpt-3.5-turbo")
+    service_context = ServiceContext.from_defaults(llm=llm, chunk_size=chunk_size)
+    vector_index = VectorStoreIndex.from_documents(
+        eval_documents, service_context=service_context
+    )
+    query_engine = vector_index.as_query_engine()
+    num_questions = len(eval_questions)
+
+    for question in eval_questions:
+        start_time = time.time()
+        response_vector = query_engine.query(question)
+        elapsed_time = time.time() - start_time
+        
+        faithfulness_result = faithfulness_gpt4.evaluate_response(
+            response=response_vector
+        ).passing
+        
+        relevancy_result = relevancy_gpt4.evaluate_response(
+            query=question, response=response_vector
+        ).passing
+
+        total_response_time += elapsed_time
+        total_faithfulness += faithfulness_result
+        total_relevancy += relevancy_result
+
+    average_response_time = total_response_time / num_questions
+    average_faithfulness = total_faithfulness / num_questions
+    average_relevancy = total_relevancy / num_questions
+    return average_response_time, average_faithfulness, average_relevancy
+
+# Iterate over different chunk sizes to evaluate the metrics to help fix the chunk size.
+for chunk_size in [128, 256, 512, 1024, 2048]
+  avg_time, avg_faithfulness, avg_relevancy = evaluate_response_time_and_accuracy(chunk_size)
+  print(f"Chunk size {chunk_size} - Average Response time: {avg_time:.2f}s, Average Faithfulness: {avg_faithfulness:.2f}, Average Relevancy: {avg_relevancy:.2f}")
+``` -->
+<p>They test across different chunk sizes and conclude (in this experiment) that <code>chunk_size = 1024</code> results in peaking of <em>Average Faithfulness</em> and <em>Average Relevancy</em>.</p>
+<p>Here are summary of the tips for choosing the optimal chunk size for a RAG system:</p>
+<ul>
+<li><p>Consider the size and complexity of the source text. Larger and more complex texts will require larger chunk sizes to ensure that all of the relevant information is captured.</p></li>
+<li><p>Consider the desired retrieval performance. If you need to retrieve the most relevant chunks possible, you may want to use a smaller chunk size. However, if you need to retrieve chunks quickly, you may want to use a larger chunk size.</p></li>
+<li><p>Consider the available system resources. If you are limited on system resources, you may want to use a smaller chunk size. However, if you have ample system resources, you may want to use a larger chunk size. You can evaluate the optimal chunk size for your RAG system by using a variety of metrics, such as:</p></li>
+<li><p><strong>Relevance:</strong> The percentage of retrieved chunks that are relevant to the query.</p></li>
+<li><p><strong>Faithfulness:</strong> The percentage of retrieved chunks that are faithful to the source text.</p></li>
+<li><p><strong>Response time:</strong> The time it takes to retrieve chunks for a query. Once you have evaluated the performance of your RAG system for different chunk sizes, you can choose the chunk size that strikes the best balance between relevance, faithfulness, and response time.</p></li>
+</ul>
+</section>
+<section id="additional-resources-for-rag-evaluation" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="additional-resources-for-rag-evaluation"><span class="header-section-number">4.2.2</span> Additional Resources for RAG Evaluation</h3>
+<p>Evaluation of RAG applications remains an unsolved problem today and is an active research area. Here are just a few references for practical evaluation of RAG: <br> 1. This <a href="https://www.databricks.com/blog/LLM-auto-eval-best-practices-RAG">blog</a> from Databricks has some best practices to evaluate RAG applications. <a href="#fig-databricks-rag">Figure&nbsp;<span>4.5</span></a> illustrates what their experiment setup looks like.</p>
+<div id="fig-databricks-rag" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/databricks_rag_eval.png" class="img-fluid figure-img" alt="experiment setup"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.5: Databricks evaluation experiment setup. <a href="https://www.databricks.com/blog/LLM-auto-eval-best-practices-RAG">Image source</a></figcaption>
+</figure>
+</div>
+<ol start="2" type="1">
+<li><span class="citation" data-cites="zheng2023judging">Zheng et al. (<a href="references.html#ref-zheng2023judging" role="doc-biblioref">2023</a>)</span> propose a strong LLMs as judges to evaluate these models on more open-ended questions.</li>
+<li><a href="https://cobusgreyling.medium.com/rag-evaluation-9813a931b3d4">RAG Evaluation</a> is another interesting blog that discuss how to use Langchain for evaluating RAG applications.</li>
+</ol>
+</section>
+</section>
+<section id="retrieval-chunks-vs.-synthesis-chunks" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="retrieval-chunks-vs.-synthesis-chunks"><span class="header-section-number">4.3</span> Retrieval Chunks vs.&nbsp;Synthesis Chunks</h2>
+<p>Another fundamental technique for enhancing retrieval in Retrieval Augmented Generation (RAG) systems is the <em>decoupling of chunks</em> used for retrieval from those used for synthesis (i.e.&nbsp;response generation). The main idea is optimal chunk representation for retrieval may not necessarily align with the requirements for effective synthesis. While a raw text chunk could contain essential details for the LLM to generate a comprehensive response, it might also contain filler words or information that could introduce biases into the embedding representation. Furthermore, it might lack the necessary global context, making it challenging to retrieve the chunk when a relevant query is received. To give an example, think about having a question answering system on emails. Emails often contain so much <em>fluff</em> (a big portion of the email is “looking forward”, “great to hear from you”, etc.) and so little information. Thus, retaining semantics in this context for better and more accurate question answering is very important.</p>
+<p>There are a few ways to implement this technique including:</p>
+<ol type="1">
+<li>Embed references to text chunks</li>
+<li>Expand sentence-level context window</li>
+</ol>
+<section id="sec-document-summary-sec" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="sec-document-summary-sec"><span class="header-section-number">4.3.1</span> Embed References to Text Chunks</h3>
+<p>The main idea here is that, we create an index in the vector database for storing document summaries. When a query comes in, we first fetch relevant document(s) at the high-level (i.e.&nbsp;summaries) before retrieving smaller text chunks directly, because it might retrieve irrelavant chunks. Then we can retrieve smaller chunks from the fetched document(s). In other words, we store the data in a hierarchical fashion: summaries of documents and chunks for each document. We can consider this approach as <em>Dense Hierarchical Retrieval</em>, in which a document-level retriever (i.e.&nbsp;summary index) first identifies the relevant documents, and then a passage-level retriever finds the relevant passages/chunks. <span class="citation" data-cites="liu2021dense">Y. Liu et al. (<a href="references.html#ref-liu2021dense" role="doc-biblioref">2021</a>)</span> and <span class="citation" data-cites="zhao2022dense">Zhao et al. (<a href="references.html#ref-zhao2022dense" role="doc-biblioref">2022</a>)</span> gives you a deep understanding of this approach. <a href="#fig-document-summary-index">Figure&nbsp;<span>4.6</span></a> shows how this technique works.</p>
+<div id="fig-document-summary-index" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/document_summary_index_h.png" class="img-fluid figure-img" alt="document summary index"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.6: Document summary index</figcaption>
+</figure>
+</div>
+<p>We can choose different strategies based on the type of documents we are dealing with. For example, if we have a list of web pages, we can consider each page as a <em>document</em> that we summarize, and also we split each document into a set of smaller chunks as the second level of our data store strategy. When user asks a question, we first find the relevant page using the summary embeddings, and then we can retrieve the relevant chunks from that particular page.</p>
+<p>If we have a pdf document, we can consider each page of the pdf as a separate document, and then split each page into smaller chunks. If we have a list of pdf files, we can choose the entire content of each pdf to be a document and split the it into smaller chunks.</p>
+<p>Let’s code it up for our pdf file.</p>
+</section>
+<section id="step-1-read-the-pdf-file" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="step-1-read-the-pdf-file">Step 1: Read the PDF file</h3>
+<p>We read the pdf file, <a href="#fig-reading_pdf">Figure&nbsp;<span>4.7</span></a>, and create a list of pages as later we will view each page as a separate document.</p>
+<div id="fig-reading_pdf" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/reading_pdf.png" class="img-fluid figure-img" alt="reading documents"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.7: Read a list of documents from each page of the pdf</figcaption>
+</figure>
+</div>
+</section>
+<section id="step-2-create-document-summary-index" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="step-2-create-document-summary-index">Step 2: Create Document Summary Index</h3>
+<p>In order to create an <em>index</em>, first we have to convert a list of texts into a list of <em>Document</em> that is compatible with LlamaIndex.</p>
+<p><strong>Definition:</strong> A <a href="https://gpt-index.readthedocs.io/en/latest/core_modules/data_modules/documents_and_nodes/root.html">Document</a> is a generic container around any data source, for instance, a PDF, an API output, or retrieved data from a database. It stores text along with some other properties such as <em>metadata</em> and <em>relationships (Links to other Documents/Nodes)</em></p>
+<p><a href="#fig-create-summary-index">Figure&nbsp;<span>4.8</span></a> shows the code.</p>
+<div id="fig-create-summary-index" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/create_summary_index.png" class="img-fluid figure-img" alt="build document summary index"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.8: Build a document summary index</figcaption>
+</figure>
+</div>
+<p>We can use the summary index to get the summary of each page/document using the document <code>id</code>, for instanc, <a href="#fig-document-summary-example">Figure&nbsp;<span>4.9</span></a> shows the output of a summary of a document.</p>
+<div id="fig-document-summary-example" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/document_summary_example.png" class="img-fluid figure-img" alt="example of document summary"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.9: Example of a document summary</figcaption>
+</figure>
+</div>
+</section>
+<section id="step-3-retrieve-and-generate-response-using-document-summary-index" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="step-3-retrieve-and-generate-response-using-document-summary-index">Step 3: Retrieve and Generate Response using Document Summary Index</h3>
+<p>In this step, when a query comes, we run a retrieval from the document summary index to find the relevant pages. Retrieved document has links to its corresponding chunks, that are used to generate the final response to the query.</p>
+<p>There are multiple ways to that in LlamaIndex:</p>
+<ul>
+<li>High-level query execution</li>
+<li>LLM based retrieval</li>
+<li>Embedding based retrieval</li>
+</ul>
+<p>The high-level approach is depicted in <a href="#fig-high-level-q-exec">Figure&nbsp;<span>4.10</span></a></p>
+<div id="fig-high-level-q-exec" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/highlevel_query_execution.png" class="img-fluid figure-img" alt="high level quey execution"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.10: High-level query execution approach (default approach)</figcaption>
+</figure>
+</div>
+<p><strong>LLM based retrieval:</strong> This approach is low-level so we can view and change the parameters. <a href="#fig-llm-based-retrieval">Figure&nbsp;<span>4.11</span></a> below displays the code snippet:</p>
+<div id="fig-llm-based-retrieval" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llm_based_retrieval.png" class="img-fluid figure-img" alt="llm based retrieval"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.11: LLM based retrieval approach</figcaption>
+</figure>
+</div>
+<p><strong>Embedding based retrieval:</strong> In this technique, we first define <code>DocumentSummaryIndexEmbeddingRetriever</code> retriever, and configure the response generator to use this retriever. We then, integrate these two components into a <code>RetrieverQueryEngine</code> and run that for the query. <a href="#fig-embedding-based-retrieval">Figure&nbsp;<span>4.12</span></a> shows the code snippet for this approach.</p>
+<div id="fig-embedding-based-retrieval" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/embedding_based_retrieval.png" class="img-fluid figure-img" alt="embedding based retrieval"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.12: Embedding based retrieval</figcaption>
+</figure>
+</div>
+</section>
+<section id="expand-sentence-level-context-window" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="expand-sentence-level-context-window"><span class="header-section-number">4.3.2</span> Expand sentence-level context window</h3>
+<p>In this approach, we have split the text into sentence level chunks to be able to perform fine-grained retrieval. However, before passing the fetched sentences to LLM response generator, we include the sentences surrounding the retrieved sentence, to enlarge the context window for better accuaracy. Please be mindful of <em>lost in the middle</em> problem when splitting large textual content at a very fine-grained level, such as sentence-level.</p>
+<p><a href="#fig-small-to-big">Figure&nbsp;<span>4.13</span></a> illustrates this technique.</p>
+<div id="fig-small-to-big" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/small_to_big.png" class="img-fluid figure-img" alt="Expanding the sentence level context"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.13: Expanding the sentence level context, so LLM has a bigger context to use to generate the response</figcaption>
+</figure>
+</div>
+</section>
+<section id="implementation" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="implementation">Implementation</h3>
+<p>Again, we rely on LlamaIndex to implement this technique. We use <code>SentenceWindowNodeParser</code> to split document into sentences and save each sentence in a node. Node contains a <em>window</em> property where we can adjust. During the retrieval step, each fetched sentence will be replaced with surrounding sentences depending on the window size via <code>MetadataReplacementNodePostProcessor</code> function.</p>
+<p><a href="#fig-sentence-window-code1">Figure&nbsp;<span>4.14</span></a> shows the basic setup such as importing necessary modules, reading the pdf file and initializing the LLM and embedding models.</p>
+<div id="fig-sentence-window-code1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/sentence_window_code1.png" class="img-fluid figure-img" alt="sentence window implementation"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.14: Basic setup for sentence window implementation</figcaption>
+</figure>
+</div>
+<p>Next, we have to define nodes that are going to be stored in the <code>VectorIndex</code> as well as sentence index. Then, we create a query engine and run the query. <a href="#fig-sentence-window-code2">Figure&nbsp;<span>4.15</span></a> shows the steps.</p>
+<div id="fig-sentence-window-code2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/sentence_window_code2.png" class="img-fluid figure-img" alt="Build the sentence index, and run the query"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.15: Build the sentence index, and run the query</figcaption>
+</figure>
+</div>
+<p><a href="#fig-sentence-window-response">Figure&nbsp;<span>4.16</span></a> displays the response output.</p>
+<div id="fig-sentence-window-response" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/sentence_window_response.png" class="img-fluid figure-img" alt="output of the window response"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.16: Output of the window response</figcaption>
+</figure>
+</div>
+<p>We can see the original sentence that is retrieved for each node (we show the first node below) and also the actual window of sentences in the <a href="#fig-sentence-window-original-sentence">Figure&nbsp;<span>4.17</span></a>.</p>
+<div id="fig-sentence-window-original-sentence" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/sentence_window_original_sentence.png" class="img-fluid figure-img" alt="original sentence that was retrieved for each node, as well as the actual window of sentences"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.17: Original sentence that was retrieved for each node, as well as the actual window of sentences</figcaption>
+</figure>
+</div>
+</section>
+<section id="lost-in-the-middle-problem" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="lost-in-the-middle-problem"><span class="header-section-number">4.3.3</span> Lost in the Middle Problem</h3>
+<p>Retrieval process in a RAG based application is all about retrieving the right and most relevant documents for a given user’s query. The way we find these documents is that retrieval method assigns a relevance score to each document based on their similarity to the query. Then, sorts them descendingly and returns them. Nevertheless, this approach might not work well when we are returning many documents such as <code>top-k &gt;= 10</code>. The reason is when we pass a very long context to LLM, it tend to ignore or overlook the documents in the middle. Consequently, putting the least relevant document to the bottom of the fetch documents is not the best strategy. A better way is to place the least relevant documents in the middle.</p>
+<p><span class="citation" data-cites="liu2023lost">N. F. Liu et al. (<a href="references.html#ref-liu2023lost" role="doc-biblioref">2023</a>)</span> in <a href="https://www-cs.stanford.edu/~nfliu/papers/lost-in-the-middle.arxiv2023.pdf">Lost in the Middle: How Language Models Use Long Contexts</a> demonstrated interesting findings about LLMs behavior. They realized that performance of LLMs is typically at its peak when relevant information is located at the beginning or end of the input context. However, it notably deteriorates when models are required to access relevant information buried within the middle of lengthy contexts. <a href="#fig-lost-inthe-middle-paper">Figure&nbsp;<span>4.18</span></a> demonstrates the results.</p>
+<div id="fig-lost-inthe-middle-paper" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/lost_inthe_middle.png" class="img-fluid figure-img" alt="lost in the middle paper results"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.18: Accuracy of the RAG based on the postions of the retrieved documents. <a href="https://www-cs.stanford.edu/~nfliu/papers/lost-in-the-middle.arxiv2023.pdf">Image source</a></figcaption>
+</figure>
+</div>
+<p>They also show that LLMs with longer context windows still face this problem and increasing the context window doesn’t solve this issue. The following demonstrates this experiment.</p>
+<div id="fig-lost-inthe-middle-paper-long-context" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/lost_inthe_middle_long_context.png" class="img-fluid figure-img" alt="Comparing LLM models with various context size"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.19: Comparing LLM models with various context size and the impact of changing the position of relevant documents</figcaption>
+</figure>
+</div>
+<p><strong>How can we alleviate this problem?</strong> The answer is to reorder the retrieved documents in such a way that most similar documents to the query are placed at the top, the less similar documents at the bottom, and the least similar documents in the middle.</p>
+<p>For implementation, we need a function to get the retrieved documents from the <code>retriever</code> and reorder them, i.e.&nbsp;place most relevant documents at the beginning and end. <a href="#fig-lost-inthe-middle-pseudocode">Figure&nbsp;<span>4.20</span></a> shows our code.</p>
+<div id="fig-lost-inthe-middle-pseudocode" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/lost_inthe_middle_solution_pseudocode.png" class="img-fluid figure-img" alt="pseudocode of a function to solve lost in the middle problem"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.20: Pseudocode of a function to solve lost in the middle problem</figcaption>
+</figure>
+</div>
+<p>We can instead utilize Langchain solution: <code>LongContextReorder</code>. It essentially implements a similar approach to <a href="#fig-lost-inthe-middle-pseudocode">Figure&nbsp;<span>4.20</span></a> function. You can read the <a href="https://api.python.langchain.com/en/latest/document_transformers/langchain.document_transformers.long_context_reorder.LongContextReorder.html">documentation</a> for more details.</p>
+<p><a href="#fig-lost-inthe-middle-langchain">Figure&nbsp;<span>4.21</span></a> shows how to use Langchain solution to deal with this problem.</p>
+<div id="fig-lost-inthe-middle-langchain" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/lost_inthe_middle_solution_langchain.png" class="img-fluid figure-img" alt="langchain approach for solving lost in the middle problem"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.21: Langchain approach for solving lost in the middle problem</figcaption>
+</figure>
+</div>
+<p>We can also use <a href="https://haystack.deepset.ai/">Haystack</a> to deal with this problem. Haystack is the open source framework for building custom NLP apps with large language models (LLMs) in an end-to-end fashion. It offers a few components that are building blocks for performing various tasks like document retrieval, and summarization. We can connect these components and create an end-to-end <em>pipeline</em>. The two very useful components that we can utilize are <em>DiversityRanker</em> and <em>LostInTheMiddleRanker</em>.</p>
+<blockquote class="blockquote">
+<p><strong>DiversityRanker</strong> is designed to maximize the variety of given documents. It does so by selecting the most semantically similar document to the query, then selecting the least similar one, and continuing this process with the remaining documents until a diverse set is formed. It operates on the principle that a diverse set of documents can increase the LLM’s ability to generate answers with more breadth and depth.</p>
+</blockquote>
+<blockquote class="blockquote">
+<p><strong>LostInTheMiddleRanker</strong> sorts the documents based on the “Lost in the Middle” order. The ranker positions the most relevant documents at the beginning and at the end of the resulting list while placing the least relevant documents in the middle.</p>
+</blockquote>
+<p>Please check their <a href="https://docs.haystack.deepset.ai/docs/ranker">documentation</a> for more details.</p>
+</section>
+<section id="embedding-optimization" class="level3" data-number="4.3.4">
+<h3 data-number="4.3.4" class="anchored" data-anchor-id="embedding-optimization"><span class="header-section-number">4.3.4</span> Embedding Optimization</h3>
+<p>Optimizing embeddings can have a significant impact on the results of your use cases. There are various APIs and providers of embedding models, each catering to different objectives:</p>
+<ul>
+<li>Some are best suited for coding tasks.</li>
+<li>Others are designed specifically for the English language.</li>
+<li>And there are also embedding models that excel in handling multilingual datasets (e.g., Multilingual BERT/<a href="https://huggingface.co/bert-base-multilingual-cased">mBERT</a>).</li>
+</ul>
+<p>However, determining which embedding model is the best fit for your dataset requires an effective evaluation method.</p>
+<p><strong>So which embedding models should we use?</strong></p>
+<p>One approach is to rely on existing academic benchmarks. However, it’s important to note that these benchmarks may not fully capture the real-world usage of retrieval systems in AI use cases. They are often synthetic benchmarks specifically designed for information retrieval problems.</p>
+<p>For example, there is a benchmark called MTEB (Massive Text Embedding Benchmark). MTEB’s <a href="https://huggingface.co/spaces/mteb/leaderboard">leaderboard</a> showcases embedding models across 8 tasks, including multilingual tasks, and currently features 132 models. You can compare the performance, speed, or both for these models (refer to the graph below: <a href="#fig-MTEB-embeddings">Figure&nbsp;<span>4.22</span></a>).</p>
+<div id="fig-MTEB-embeddings" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/MTEB-embeddings.png" class="img-fluid figure-img" alt="MTEB-embeddings"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.22: Models by average English MTEB score (y) vs speed (x) vs embedding size (circle size). <a href="https://huggingface.co/blog/mteb">Image source</a></figcaption>
+</figure>
+</div>
+<p>For better results, you can still utilize open-source tools by applying them to your specific data and use case. Additionally, you can enhance relevance by incorporating human feedback through a simple relevance feedback endpoint.</p>
+<p>Constructing your own datasets is also important as you have a deep understanding of your production data, relevant metrics, and what truly matters to you. This allows you to tailor the training and evaluation process to your specific needs.</p>
+<p>In terms of evaluating the performance of embedding models, there are excellent evaluation tools available in the market. These tools can help you assess the effectiveness of different models and make informed decisions.</p>
+<p>It is worth noting that recent research and experiments have shown that embedding models with the same training objective and similar data tend to learn very similar representations, up to an affine linear transform. This means that it is possible to project one model’s embedding space into another model’s embedding space using a simple linear transform.</p>
+<p>By understanding and leveraging linear identifiability, you can explore ways to transfer knowledge between embedding models and potentially improve their performance in specific tasks.”</p>
+<p>This is called linear identifiability, and it was discussed in the 2020 paper by <span class="citation" data-cites="Roeder2021linear">Roeder and Kingma (<a href="references.html#ref-Roeder2021linear" role="doc-biblioref">2021</a>)</span> <a href="https://arxiv.org/pdf/2007.00810.pdf">On Linear Identifiability of Learned Representations</a> from Google Brain. The paper states,</p>
+<blockquote class="blockquote">
+<p><em>“We demonstrate that as one increases the representational capacity of the model and dataset size, learned representations indeed tend towards solutions that are equal up to only a linear transformation.”</em></p>
+</blockquote>
+<p>See an example below:</p>
+<div id="fig-linear-identifiability" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/linear-identifiability.png" class="img-fluid figure-img" alt="linear-identifiability"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.23: Linear Identifiability. <a href="https://arxiv.org/pdf/2007.00810.pdf">Image source</a></figcaption>
+</figure>
+</div>
+<p>Therefore, the selection of a particular embedding model may not be that important if you are able to discover and implement a suitable transformation from your own dataset.</p>
+</section>
+</section>
+<section id="rethinking-retrieval-methods-for-heterogeneous-document-corpora" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="rethinking-retrieval-methods-for-heterogeneous-document-corpora"><span class="header-section-number">4.4</span> Rethinking Retrieval Methods for Heterogeneous Document Corpora</h2>
+<p>Retrieval-augmented generation (RAG) applications, especially when dealing with a substantial volume of documents (e.g.&nbsp;having many pdf files), often face challenges related to performance, relevance, and latency.</p>
+<p><strong>Example:</strong> Assume a user asks a question and the answer to user’s question only involves two pdf files, we would rather first get those two relevant pdf documents and then find the actual answer from their chunks, instead of searching through thusands of text chunks. But how to do that?</p>
+<p>There are multiple ways to achieve that goal:</p>
+<ul>
+<li>Have multi-level embeddings, i.e.&nbsp;embed document summaries, where each document summary is related to its text chunks. This approach is implemented in <a href="#sec-document-summary-sec"><span>Section&nbsp;4.3.1</span></a>.</li>
+<li>Add metadata about each document and store that along with the document in the vector database.</li>
+</ul>
+<section id="how-metadata-can-help" class="level3" data-number="4.4.1">
+<h3 data-number="4.4.1" class="anchored" data-anchor-id="how-metadata-can-help"><span class="header-section-number">4.4.1</span> How metadata can help</h3>
+<p>Including metadata in the indexing process can be a powerful strategy to address these challenges and significantly enhance the overall system’s efficiency. By narrowing down the search scope using metadata filters, the system can reduce the number of documents to be considered, resulting in faster retrieval times.</p>
+<p><a href="#fig-metadata-filtering">Figure&nbsp;<span>4.24</span></a> shows how metadata filtering can help the retrieval process. <em>When user asks a question, they can explicitly give metadata for instance by specifying filters such as dropdown list, etc., or we can use LLM to determine the metadata filters from the query and search the vector database using the filters. Vector database utilizes the filters to narrow down search to the documents that match with the filters, and then finds the most similar chunks from documents and returns the top-k chunks.</em></p>
+<div id="fig-metadata-filtering" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/metadata_filtering.png" class="img-fluid figure-img" alt="how metadata filtering can help retrieval process"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.24: How metadata filtering can improve retrieval process</figcaption>
+</figure>
+</div>
+<p>Please note that although we can add metadata to the text chunks after they are stored in the vector database, we should do that in the preprocessing step while we are splitting and embedding the documents, because if the vector database index becomes very large (i.e.&nbsp;we already have a great deal of embeddings in vector database), updating it will be significantly time consuming.</p>
+<section id="use-langchain-for-metadata-filtering" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="use-langchain-for-metadata-filtering">Use Langchain for Metadata Filtering</h4>
+<p><a href="#fig-metadata-filtering-code1">Figure&nbsp;<span>4.25</span></a> shows how to define new metadata for text chunks, and how to use filters to perform retrieval.</p>
+<p>In this example, we load two pdf files, one file is about machine learning interview questions, and the other file is a research paper. We would like to add a topic or category of each file as metadata, so later we can restrict our search to the category. Therefore, we update the initial metadata field by adding a <code>category</code> property to each text chunk and then store them in the vector database.</p>
+<div id="fig-metadata-filtering-code1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/metadata_filtering_code1.png" class="img-fluid figure-img" alt="Read the files and update the metadata property"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.25: Read the files and update the metadata property</figcaption>
+</figure>
+</div>
+<p>If we print out the <code>metadata</code> of documents, we can see the <code>category</code> property has been added, shown in <a href="#fig-metadata-filtering-code2-output">Figure&nbsp;<span>4.26</span></a>.</p>
+<div id="fig-metadata-filtering-code2-output" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/metadata_filtering_code2-output.png" class="img-fluid figure-img" alt="Output example of metadata for text chunks"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.26: Output example of metadata for text chunks</figcaption>
+</figure>
+</div>
+<p>Now, we define the index and use it to perform search and retrieval, which is shown in <a href="#fig-metadata-filtering-code3-retrieval">Figure&nbsp;<span>4.27</span></a>.</p>
+<div id="fig-metadata-filtering-code3-retrieval" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/metadata_filtering_code3-retrieval.png" class="img-fluid figure-img" alt="Insert text chunks into the vector database and perform retrieval"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.27: Insert text chunks into the vector database and perform retrieval</figcaption>
+</figure>
+</div>
+</section>
+<section id="use-llamaindex-for-metadata-filtering" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="use-llamaindex-for-metadata-filtering">Use LlamaIndex for Metadata Filtering</h4>
+<p><a href="#fig-metadata-filtering-code3-retrieval-full-llamaindex">Figure&nbsp;<span>4.28</span></a> shows how to use LlamaIndex for metadata filtering.</p>
+<div id="fig-metadata-filtering-code3-retrieval-full-llamaindex" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/metadata_filtering_code3-retrieval-full-llamaindex.png" class="img-fluid figure-img" alt="Metadata filtering in LlamaIndex for document retrieval"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.28: Metadata filtering in LlamaIndex for document retrieval</figcaption>
+</figure>
+</div>
+</section>
+<section id="how-to-let-llm-infer-the-metadata-from-user-question" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="how-to-let-llm-infer-the-metadata-from-user-question">How to let LLM infer the metadata from user question</h4>
+<p>In both of the previous techniques, we have to explicitly define the metadata/filters while doing the retrieval. However, the questions is: <em>Can we ask LLM to infer the metadata from user query?</em> The short answer is: <em>Yes</em>.</p>
+<p>Therefore, the general approach is we need to define a particular prompt for LLM, so it can use that to extract entities or metadata from the user query, map them to the existing metadata stored with text chunks in the vector database, and then perform the retrieval.</p>
+<p>That said, LlamaIndex provides us an implemented version of this approach. The following code is from the LlamaIndex documentation <a href="https://gpt-index.readthedocs.io/en/latest/examples/vector_stores/chroma_auto_retriever.html">here</a>. For this technique, we define the metadata (in this example <code>category</code> and <code>country</code>) along with each text chunk. <a href="#fig-llamaindex-autoretrieval-code1">Figure&nbsp;<span>4.29</span></a> shows the code snippet for this step.</p>
+<div id="fig-llamaindex-autoretrieval-code1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex-autoretrieval_code1.png" class="img-fluid figure-img" alt="Define text node and metadata for auto retrieval"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.29: Define text node and metadata for auto retrieval</figcaption>
+</figure>
+</div>
+<p><a href="#fig-llamaindex-autoretrieval_code2">Figure&nbsp;<span>4.30</span></a> shows the retrieval process including how to define vector index, vector store, and <code>VectorIndexAutoRetriever</code> object.</p>
+<div id="fig-llamaindex-autoretrieval_code2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/llamaindex-autoretrieval_code2.png" class="img-fluid figure-img" alt="Define VectorIndexAutoRetriever retriever and VectorStoreInfo"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.30: Define VectorIndexAutoRetriever retriever and VectorStoreInfo, which contains a structured description of the vector store collection and the metadata filters it supports.</figcaption>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="hybrid-document-retrieval" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="hybrid-document-retrieval"><span class="header-section-number">4.5</span> Hybrid Document Retrieval</h2>
+<p>Hybrid document retrieval is an approach that combines traditional keyword-based search like BM25 with semantic (dense) search using embeddings, such as BERT or word2vec. Integrating this technique to Retrieval-Augmented Generation (RAG) applications can significantly enhance the effectiveness of document retrieval. It addresses scenarios where a basic keyword-based approach can outperform semantic search and demonstrates how combining these methods improves retrieval in RAG applications.</p>
+<p>In addition, often times a complete migration to a semantic-based search using RAG is challenging for most companies. They might already have a keyword-based search system and have been using it for quite a long time. Performing an overhaul to the company’s information architecture, and migrating to a vector database is just infeasible.</p>
+<p><strong>Scenarios Favoring Keyword-Based Search:</strong></p>
+<ol type="1">
+<li><p><strong>Highly Specific Queries:</strong> In cases where a user’s query is highly specific and focuses on precise terms or phrases, a keyword-based approach can outperform semantic search. Keyword matching excels at finding exact matches within documents.</p></li>
+<li><p><strong>Niche Domains:</strong> In specialized domains with industry-specific jargon or acronyms, keyword search can be more effective as it directly matches terminology without requiring extensive semantic understanding.</p></li>
+<li><p><strong>Short Documents:</strong> When dealing with very short documents, such as tweets or headlines, keyword-based search can be more efficient. Semantic models often require longer text to derive meaningful embeddings.</p></li>
+<li><p><strong>Low Resource Usage:</strong> Keyword search typically requires fewer computational resources compared to semantic search. This can be advantageous when resource efficiency is a critical concern.</p></li>
+</ol>
+<p><strong>Combining Keyword and Semantic Approaches for Improved Retrieval:</strong></p>
+<p>To harness the strengths of both keyword-based and semantic (dense) retrievers effectively, a pragmatic approach is to integrate two retrievers into the pipeline and merge their outputs. This two-pronged strategy capitalizes on the unique advantages of each retriever, resulting in more comprehensive and accurate retrieval in Retrieval-Augmented Generation (RAG) applications.</p>
+<p>The process begins by employing both <strong>keyword-based</strong> as well as <strong>dense</strong> retrievers within the RAG pipeline. However, the challenge lies in merging the results obtained from these two retrievers, each of which returns ranked lists of results with relevance scores assigned to each document. <a href="#fig-hybrid-retrieval-pipeline">Figure&nbsp;<span>4.31</span></a> illustrates the hybrid retrieval pipeline.</p>
+<div id="fig-hybrid-retrieval-pipeline" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/hybrid-retrieval.png" class="img-fluid figure-img" alt="hybrid retrieval pipeline"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.31: Hybrid retrieval pipeline</figcaption>
+</figure>
+</div>
+<p>Merging the results from keyword-based and semantic retrievers can be approached in several ways, depending on the nature of the RAG application:</p>
+<ol type="1">
+<li><p><strong>Concatenation:</strong> This method involves simply appending all documents from both retrievers (excluding duplicates) to create the final list of results. Concatenation is suitable when you intend to use all retrieved documents and the order of the results is not crucial. This approach can be valuable in extractive question-answering pipelines, where you aim to extract information from multiple sources and are less concerned about ranking.</p></li>
+<li><p><strong>Reciprocal Rank Fusion (RRF):</strong> RRF operates with a formula that re-ranks documents from both retrievers, giving priority to those that appear in both results lists. Its purpose is to elevate the most relevant documents to the top of the list, thereby enhancing the overall relevance of the results. RRF is particularly useful when the order of the results is important or when you intend to pass on only a subset of results to the subsequent processing stages.</p></li>
+<li><p><strong>Merging by Scoring:</strong> In this approach, documents are ranked based on the scores assigned by the individual retrievers. This method is suitable when you aim to prioritize results from one retriever over the other. If the relevance scores assigned by the two retrievers are comparable and you wish to emphasize results from a particular retriever, this method can be employed. For instance, if you’re using dense retrievers from different sources that return documents from various document stores, this method allows you to choose one retriever’s output over another.</p></li>
+</ol>
+<p><strong>Advantages of Hybrid Retrieval:</strong></p>
+<ul>
+<li><p><strong>Enhanced Relevance:</strong> Hybrid retrieval leverages the strengths of both keyword and semantic approaches, increasing the chances of returning highly relevant documents.</p></li>
+<li><p><strong>Coverage:</strong> It addresses scenarios where purely keyword or purely semantic approaches might fail, providing a broader scope of relevant documents.</p></li>
+<li><p><strong>Resource Efficiency:</strong> By initially narrowing the search with keyword-based filtering, the system conserves computational resources, making the retrieval process more efficient.</p></li>
+<li><p><strong>Adaptability:</strong> Hybrid retrieval allows for adaptability to different user queries and document types, striking a balance between precision and recall.</p></li>
+</ul>
+<p>There are frameworks which support hybrid retrieval out of the box such as <a href="https://www.elastic.co/blog/improving-information-retrieval-elastic-stack-hybrid">ElasticSearch</a>, <a href="https://haystack.deepset.ai/tutorials/26_hybrid_retrieval">Haystack</a>, <a href="https://weaviate.io/developers/weaviate/search/hybrid">Weaviate</a>, and <a href="https://txt.cohere.com/rerank/">Cohere Rerank</a>. Let’s find out how to implement this approach using Haystack. The following code is from Haystack documentation, you can see all the implementation details <a href="https://haystack.deepset.ai/tutorials/26_hybrid_retrieval">here</a>. The documents that are used for this example are abstracts of papers from PubMed. You can find and download the dataset <a href="https://huggingface.co/datasets/ywchoi/pubmed_abstract_3/viewer/default/test">here</a>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install datasets<span class="op">&gt;=</span><span class="fl">2.6.1</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pip install farm<span class="op">-</span>haystack[inference]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Step 1:</strong> We load the dataset and initialize the document store (i.e.&nbsp;vector database). <a href="#fig-haystack-initialization">Figure&nbsp;<span>4.32</span></a> shows this step.</p>
+<div id="fig-haystack-initialization" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/haystack_initialization.png" class="img-fluid figure-img" alt="Load documents and initialize document store"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.32: Load documents and initialize document store</figcaption>
+</figure>
+</div>
+<p><strong>Step 2:</strong> Define the retrievers, insert the documents and embeddings into the document store and choose the <em>join document</em> strategy. You can see this step in <a href="#fig-haystack-define-retrievers">Figure&nbsp;<span>4.33</span></a>.</p>
+<div id="fig-haystack-define-retrievers" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/haystack_define_retrievers.png" class="img-fluid figure-img" alt="Define keyword and embedding based retrievers"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.33: Define keyword and embedding based retrievers</figcaption>
+</figure>
+</div>
+<p><strong>Step 3:</strong> Create an end-to-end pipeline in Haystack and perform the hybrid retrieval for a query. This step is depicted in <a href="#fig-haystack-run-retrievers">Figure&nbsp;<span>4.34</span></a>.</p>
+<div id="fig-haystack-run-retrievers" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/haystack_run_retrievers.png" class="img-fluid figure-img" alt="Create end-to-end pipeline and run the retrievers"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.34: Create end-to-end pipeline and run the retrievers</figcaption>
+</figure>
+</div>
+</section>
+<section id="query-rewriting-for-retrieval-augmented-large-language-models" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="query-rewriting-for-retrieval-augmented-large-language-models"><span class="header-section-number">4.6</span> Query Rewriting for Retrieval-Augmented Large Language Models</h2>
+<p>Query rewriting is a sophisticated technique that plays a pivotal role in enhancing the performance of Retrieval-Augmented Large Language Models (RAG). The fundamental idea behind query rewriting is to optimize and fine-tune the queries presented to the retrieval component of RAG systems, ultimately leading to more accurate and contextually relevant results.</p>
+<p>The core concept is to transform the initial user query into an improved form that effectively captures the user’s intent and aligns with the document retrieval phase. This often involves various steps and considerations, including:</p>
+<ol type="1">
+<li><p><strong>Expanding User Queries</strong>: Query rewriting can involve expanding the initial user query by adding synonyms, related terms, or concepts that might improve the retrieval of relevant documents. This expansion can be based on linguistic analysis or external knowledge sources.</p></li>
+<li><p><strong>Rephrasing for Clarity</strong>: Queries are often rewritten to improve their clarity and conciseness. Ambiguous or complex phrasings can be simplified to make the user’s intent more explicit.</p></li>
+<li><p><strong>Contextual Adaptation</strong>: The rewriting process may take into account the specific context of the documents available for retrieval. It can adapt the query to the characteristics of the document corpus, which is particularly valuable in domain-specific applications.</p></li>
+</ol>
+<p>Query rewriting is closely tied to the document retrieval phase in RAG systems. It contributes to better retrieval rankings, which, in turn, leads to more informative and contextually relevant answers generated by the language model. The goal is to ensure that the retrieved documents align closely with the user’s intent and cover a wide spectrum of relevant information.</p>
+<section id="leveraging-large-language-models-llms-for-query-rewriting-in-rags" class="level3" data-number="4.6.1">
+<h3 data-number="4.6.1" class="anchored" data-anchor-id="leveraging-large-language-models-llms-for-query-rewriting-in-rags"><span class="header-section-number">4.6.1</span> Leveraging Large Language Models (LLMs) for Query Rewriting in RAGs</h3>
+<p><strong>Question:</strong> <em>With the advent of Large Language Models (LLMs) that have revolutionized natural language understanding and generation tasks, can we use them for query rewriting?</em> The answer is: <em>Yes</em>. They can help in two primary ways: query expansion and generating better prompts. <a href="#fig-query-rewriting">Figure&nbsp;<span>4.36</span></a> shows how query rewriting works. We can use LLM to either expand (enhance) a query or generate multiple (sub)queries for better retreival process.</p>
+<div id="fig-query-rewriting" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query-rewriting.png" class="img-fluid figure-img" alt="Query re-writing using LLMs. LLM can expand the query or create multiple sub-queries."></p>
+<figcaption class="figure-caption">Figure&nbsp;4.35: Query re-writing using LLMs. LLM can expand the query or create multiple sub-queries.</figcaption>
+</figure>
+</div>
+<section id="query-expansion-with-llms" class="level4" data-number="4.6.1.1">
+<h4 data-number="4.6.1.1" class="anchored" data-anchor-id="query-expansion-with-llms"><span class="header-section-number">4.6.1.1</span> Query Expansion with LLMs</h4>
+<p>LLMs possess an extensive understanding of language and vast knowledge repositories, which makes them ideal for query expansion. Here’s how LLMs can aid in query expansion:</p>
+<p><strong>Synonym Generation:</strong> LLMs can identify synonyms and related terms for words in the user’s query. By expanding the query with synonyms, it increases the chances of retrieving documents that may use different terminology but are contextually relevant.</p>
+<p><strong>Example:</strong> <br> <em>User Query:</em> “Renewable energy sources”. <br> <em>LLM Query Expansion:</em> “Renewable energy sources” -&gt; “Green energy sources,” “Sustainable energy sources,” “Eco-friendly energy sources”. <br></p>
+<p>By suggesting synonyms for “renewable,” the LLM broadens the query’s scope to retrieve documents that may use alternative terminology.</p>
+<p><strong>Conceptual Expansion:</strong> LLMs can identify concepts and entities related to the query. They can suggest adding relevant concepts, entities, or phrases that can lead to more comprehensive results. For instance, if a user queries about “climate change,” the LLM might suggest adding “global warming” to ensure a broader document retrieval.</p>
+<p><strong>Example:</strong> <br> <em>User Query:</em> “Mars exploration”. <br> <em>LLM Query Expansion:</em> “Mars exploration” -&gt; “Mars mission,” “Red planet research,” “Space exploration of Mars”.</p>
+<p><strong>Multilingual Query Expansion:</strong> For multilingual queries, LLMs can assist in translating and expanding the query into multiple languages, broadening the search scope and retrieving documents in various languages.</p>
+</section>
+<section id="generating-better-prompts-with-llms" class="level4" data-number="4.6.1.2">
+<h4 data-number="4.6.1.2" class="anchored" data-anchor-id="generating-better-prompts-with-llms"><span class="header-section-number">4.6.1.2</span> Generating Better Prompts with LLMs</h4>
+<p>LLMs can assist in generating more effective prompts for retrieval, especially when a prompt-based retrieval mechanism is employed. Here’s how LLMs contribute to prompt generation.</p>
+<p><strong>Query Refinement:</strong> LLMs can refine a user query by making it more concise, unambiguous, and contextually relevant. The refined query can then serve as a prompt for the retrieval component, ensuring a more focused search.</p>
+<p><strong>Example:</strong> <br> <em>User Query:</em> “How does photosynthesis work?” <br> <em>LLM-Generated Prompt:</em> “Explain the process of photosynthesis.”</p>
+<p><strong>Multi-step Prompts:</strong> In complex queries, LLMs can generate multi-step prompts that guide the retrieval component through a series of sub-queries. This can help break down intricate requests into more manageable retrieval tasks.</p>
+<p><strong>Example:</strong> <br> <em>User Query:</em> “Market trends for electric cars in 2021”. <br> <em>LLM-Generated Multi-Step Prompts:</em></p>
+<ul>
+<li>“Retrieve market trends for electric cars.”</li>
+<li>“Filter results to focus on trends in 2021.”</li>
+</ul>
+<p>The LLM generates sequential prompts to guide the retrieval component in finding documents related to market trends for electric cars in 2021.</p>
+<p><strong>Context-Aware Prompts:</strong> LLMs can consider the context of the available document corpus and generate prompts that align with the characteristics of the documents. They can adapt prompts for specific domains or industries, ensuring that the retrieval phase retrieves contextually relevant documents.</p>
+<p><strong>Example:</strong> <br> <em>User Query:</em> “Legal documents for the healthcare industry”. <br> <em>LLM-Generated Domain-Specific Prompt:</em> “Retrieve legal documents relevant to the healthcare industry.”</p>
+<p>Understanding the context, the LLM generates a prompt tailored to the healthcare industry, ensuring documents retrieved are pertinent to that domain.</p>
+<p>Query rerwriting for RAGs is an active research area, and new approaches are suggested regularly. One recent research is <span class="citation" data-cites="ma2023query">Ma et al. (<a href="references.html#ref-ma2023query" role="doc-biblioref">2023</a>)</span>, where they propose a new framework for query generation. See <a href="https://arxiv.org/pdf/2305.14283.pdf">here</a> to learn more about their method.</p>
+</section>
+</section>
+</section>
+<section id="query-routing-in-rag" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="query-routing-in-rag"><span class="header-section-number">4.7</span> Query Routing in RAG</h2>
+<p>Query routing in RAG, often facilitated by a router, is the process of automatically selecting and invoking the most suitable retrieval technique or tool for a given user query. It enables a dynamic, adaptive approach to choose how to retrieve information based on the specific requirements of each query.</p>
+<p>Rather than relying on a fixed retrieval method, query routing empowers the system to intelligently assess the user’s query and select the appropriate retrieval mechanism. This approach is particularly powerful in scenarios where a diverse range of retrieval techniques or tools can be employed to answer different types of queries. The following shows the generate architecture of this approach.</p>
+<div id="fig-query-rewriting" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query_routing.png" class="img-fluid figure-img" alt="Query re-writing using LLMs. LLM can expand the query or create multiple sub-queries."></p>
+<figcaption class="figure-caption">Figure&nbsp;4.36: Query router architecture</figcaption>
+</figure>
+</div>
+<p><strong>How Query Routing Works:</strong></p>
+<ol type="1">
+<li><p><strong>User Query Input</strong>:</p>
+<p>A user enters a query into the RAG system. This query could encompass various types of information needs, such as fact-based lookup, summarization, translation, question answering, etc.</p></li>
+<li><p><strong>Query Analysis</strong>:</p>
+<p>The router or the query routing component first performs an analysis of the user’s query. This analysis involves understanding the nature of the query, its intent, and the type of information required.</p></li>
+<li><p><strong>Detection of Retrieval Technique Requirement</strong>:</p>
+<p>Based on the analysis, the router detects the retrieval technique or tool that best matches the query’s requirements. This detection is often driven by heuristics, pre-defined rules, machine learning models, or a combination of these methods.</p></li>
+<li><p><strong>Selection of Retrieval Technique</strong>:</p>
+<p>The router selects the most appropriate retrieval technique from a predefined set, which can include methods like fact-based lookup in a vector store, summarization, document retrieval, question answering, or translation, among others.</p></li>
+<li><p><strong>Invoke the Retrieval Component</strong>:</p>
+<p>The router then calls the relevant retrieval component or “tool” that specializes in the chosen retrieval technique. This component may be a vector store interface, a summarization tool, a translation service, or any other retrieval method.</p></li>
+<li><p><strong>Information Retrieval</strong>:</p>
+<p>The selected retrieval component performs the necessary information retrieval or processing based on the chosen technique. For example, if fact-based lookup is required, it retrieves facts from a vector store. If summarization is needed, it generates a concise summary. If translation is the goal, it translates the content.</p></li>
+<li><p><strong>Generation of Output</strong>:</p>
+<p>The retrieved or processed information is then used by the generation component in the RAG system to compose a response, which is presented to the user.</p></li>
+</ol>
+<p>There are multiple ways to implement query routing in Retrieval-Augmented Generation (RAG) systems:</p>
+<ol type="1">
+<li><p><strong>Intent Classification Model:</strong></p>
+<ul>
+<li><p><strong>Use a Classifier</strong>: Employ a pre-trained classifier model that can categorize user queries based on their intent. This classifier can have predefined categories such as fact-based lookup, summarization, translation, question answering, etc. The selected category then dictates the retrieval method to be used.</p></li>
+<li><p><strong>Machine Learning</strong>: Train a custom intent classification model on labeled query data to predict the query’s intent. This model can be fine-tuned on specific intent detection tasks relevant to the RAG system.</p></li>
+</ul></li>
+</ol>
+<p><a href="#fig-query-routing-zeroshot">Figure&nbsp;<span>4.37</span></a> shows how to use a zero-shot classifer to categorize user queries.</p>
+<div id="fig-query-routing-zeroshot" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query_routing_zeroshot.png" class="img-fluid figure-img" alt="Using a zero-shot classifier to categorize and route user queries"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.37: Using a zero-shot classifier to categorize and route user queries</figcaption>
+</figure>
+</div>
+<ol start="2" type="1">
+<li><p><strong>Prompt-Based Routing</strong>:</p>
+<ul>
+<li><p><strong>Leverage LLMs</strong>: Utilize Large Language Models (LLMs), such as GPT-4 or similar models, to perform query classification. A prompt can be designed to guide the LLM in classifying the query based on its intent.</p></li>
+<li><p><strong>Template Prompts</strong>: Create a set of template prompts that are specifically designed to categorize queries. These templates can include leading questions or cues to elicit the intent of the query.</p></li>
+</ul></li>
+</ol>
+<p>The code in <a href="#fig-query-routing-prompt">Figure&nbsp;<span>4.38</span></a> shows how to use a LLM <code>text-davinci-002</code> for query routing.</p>
+<div id="fig-query-routing-prompt" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query_routing_prompt.png" class="img-fluid figure-img" alt="Using a LLM classifier to categorize and route user queries"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.38: Using a LLM to categorize and route user queries</figcaption>
+</figure>
+</div>
+<ol start="3" type="1">
+<li><p><strong>Rule-Based Routing</strong>:</p>
+<ul>
+<li><p><strong>Rule-Based System</strong>: Develop a rule-based system that consists of predefined rules or conditions to categorize queries. For example, if a query starts with “Translate,” it is routed to a translation retrieval method.</p></li>
+<li><p><strong>Regular Expressions</strong>: Use regular expressions to match query patterns and automatically route queries based on predefined patterns, keywords, or structures.</p></li>
+</ul></li>
+</ol>
+<p>The choice of implementation depends on the complexity of the RAG system, the available resources, and the specific requirements of the application. Implementing a combination of these methods can provide a robust and adaptive query routing mechanism that enhances the overall performance of RAG systems.</p>
+<p>Let’s take a look at an example where we use LlamaIndex framework for routing queries between a <em>summarization route</em> and <em>fact-based route</em>. LlamaIndex has a concept called <code>RouterQueryEngine</code> which accepts a set of query engines <code>QueryEngineTool</code> objects as input. A <code>QueryEngineTool</code> is essentially an index used for retrieving documents from vector database. First step is to load the documents and define the summary index and fact-based index, which is displayed in <a href="#fig-query-routing-llamaindex-code1">Figure&nbsp;<span>4.39</span></a>.</p>
+<div id="fig-query-routing-llamaindex-code1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query_routing_llamaindex_code1.png" class="img-fluid figure-img" alt="Query routing example in LlamaIndex."></p>
+<figcaption class="figure-caption">Figure&nbsp;4.39: Query routing example in LlamaIndex. First we load documents and create different indecies.</figcaption>
+</figure>
+</div>
+<p>Then, we create <code>QueryEngine</code> objects for each index and add them to the <code>RouterQueryEngine</code> object. <a href="#fig-query-routing-llamaindex-code2">Figure&nbsp;<span>4.40</span></a> shows this step.</p>
+<div id="fig-query-routing-llamaindex-code2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/query_routing_llamaindex_code2.png" class="img-fluid figure-img" alt="Define `QueryEngine` and `RouterQueryEngine` objects, and run the engine for user queries."></p>
+<figcaption class="figure-caption">Figure&nbsp;4.40: Define <code>QueryEngine</code> and <code>RouterQueryEngine</code> objects, and run the engine for user queries.</figcaption>
+</figure>
+</div>
+<p>By dynamically routing queries to the most suitable retrieval techniques, query routing enhances RAG by ensuring that the system adapts to the specific requirements of each user query, providing more accurate and context-aware responses. It overcomes the challenge of needing to know in advance which retrieval technique to apply and optimizes the retrieval process for different types of information needs.</p>
+</section>
+<section id="leveraging-user-history-to-enhance-rag-performance" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="leveraging-user-history-to-enhance-rag-performance"><span class="header-section-number">4.8</span> Leveraging User History to Enhance RAG Performance</h2>
+<p>Retrieval-Augmented Generation (RAG) systems have gained prominence in natural language processing applications due to their ability to combine the strengths of information retrieval and language generation. However, RAG applications often involve significant computational and financial costs due to the necessity of embeddings, retrievals and even response generation. When dealing with recurrent user queries or similar questions, these costs can be optimized by leveraging the memory of previously asked questions.</p>
+<section id="challenge" class="level3" data-number="4.8.1">
+<h3 data-number="4.8.1" class="anchored" data-anchor-id="challenge"><span class="header-section-number">4.8.1</span> Challenge</h3>
+<p>In many real-world applications, users tend to ask similar or nearly identical questions repeatedly. For instance, in a customer support chatbot, users may have common queries related to product information or troubleshooting procedures. While the RAG framework excels at generating relevant responses based on retrieval, it may not be efficient to re-embed and retrieve information for the same questions each time they are asked. This is where the concept of leveraging user history comes into play.</p>
+</section>
+<section id="how-user-history-enhances-rag-performance" class="level3" data-number="4.8.2">
+<h3 data-number="4.8.2" class="anchored" data-anchor-id="how-user-history-enhances-rag-performance"><span class="header-section-number">4.8.2</span> How User History Enhances RAG Performance</h3>
+<p>Leveraging user history to enhance RAG performance involves building a memory or cache of previously asked questions and their corresponding responses. When a user query is received, instead of immediately triggering an embedding and retrieval process, the system can check the user history to see if it has encountered a similar or identical query before. This approach offers several advantages:</p>
+<ol type="1">
+<li><p><strong>Faster Response Times (i.e.&nbsp;reduced latency):</strong> By comparing the new query to the user history, the system can identify duplicate or closely related questions. In such cases, it can bypass the embedding and retrieval steps, significantly reducing response times.</p></li>
+<li><p><strong>Cost Reduction:</strong> Skipping the resource-intensive retrieval process for recurrent queries leads to a notable reduction in computational and financial costs, as the need for additional API calls or data processing diminishes.</p></li>
+<li><p><strong>Consistency and Accuracy:</strong> Responses to repeated questions can remain consistent and accurate over time. The use of cached responses from the user history ensures that users receive reliable information without relying on new retrievals. Additionally, by keeping track of user history, RAG can learn to better understand the user’s intent and context. This can lead to more accurate answers to questions, even if the questions are not perfectly phrased.</p></li>
+</ol>
+</section>
+<section id="how-memoryuser-history-works" class="level3" data-number="4.8.3">
+<h3 data-number="4.8.3" class="anchored" data-anchor-id="how-memoryuser-history-works"><span class="header-section-number">4.8.3</span> How Memory/User History Works</h3>
+<p>A simple RAG memory can be implemented as follows: We need to maintain a log of user queries and their corresponding answers. Therefore, we can define the memory as a key-value store, where the keys are questions and the values are answers. When a user asks a question, RAG first checks its memory to see if it has already answered a similar question. If it has, then it simply retrieves the answer from its memory and returns it to the user. If it has not already answered a similar question, then it performs the embedding and retrieval process as usual.</p>
+<p>We need to have a mechanism that constantly updates the RAG’s memory with new questions and answers. As a user asks more questions, RAG’s memory grows and it becomes better able to answer future questions accurately and efficiently.</p>
+<p><strong>Implementation:</strong> The snippet code in <a href="#fig-rag-memory">Figure&nbsp;<span>4.41</span></a> shows a very basic implementation of memory for RAG.</p>
+<div id="fig-rag-memory" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="diagrams/rag_memory.png" class="img-fluid figure-img" alt="A basic key-value implementation of memory for RAG"></p>
+<figcaption class="figure-caption">Figure&nbsp;4.41: A basic key-value implementation of memory for RAG.</figcaption>
+</figure>
+</div>
+<p>While a simple in-memory dictionary, as shown in the previous example, can be effective for maintaining recent user history, it might not be sufficient for handling a large-scale conversation history or long-term memory. To address these challenges, RAG systems can benefit from using a vector database for memory.</p>
+<p>The implementation of a vector database for memory in a RAG system involves several key steps:</p>
+<ol type="1">
+<li><p><strong>Data Ingestion:</strong> Store historical question-answer pairs along with their corresponding embeddings in the vector database. This process typically involves a batch or incremental data ingestion pipeline.</p></li>
+<li><p><strong>Retrieval:</strong> When a user poses a question, retrieve the most relevant historical answers by calculating the similarity between the question’s embedding and the embeddings in the vector database.</p></li>
+<li><p><strong>Updating Memory:</strong> Periodically update the vector database with new question-answer pairs and their embeddings to keep the memory up to date.</p></li>
+<li><p><strong>Caching:</strong> Implement a caching mechanism to enhance retrieval speed by temporarily storing frequently accessed data in memory.</p></li>
+<li><p><strong>Query Optimization:</strong> Use efficient indexing and search algorithms to optimize the retrieval process, reducing query response times.</p></li>
+</ol>
+<p>Incorporating a vector database for memory in a RAG system enhances its ability to provide contextually relevant and coherent responses by efficiently managing and retrieving historical information. This approach is particularly valuable in scenarios where extensive conversation histories or long-term memory are essential for the application’s success.</p>
+<p>As we wrap up our exploration of advanced RAG systems in this Chapter, we are on the cusp of a new frontier. In Chapter 5 - “Observability Tools for RAG,” we will discuss various observability tools tailored for RAG systems. We will explore their integration with LlamaIndex, including Weights &amp; Biases, Phoenix, and HoneyHive. These tools will not only help us monitor and evaluate the performance of our RAG systems but also provide valuable insights for continuous improvement.</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-liu2023lost" class="csl-entry" role="listitem">
+Liu, Nelson F, Kevin Lin, John Hewitt, Ashwin Paranjape, Michele Bevilacqua, Fabio Petroni, and Percy Liang. 2023. <span>“Lost in the Middle: How Language Models Use Long Contexts.”</span> <em>arXiv Preprint arXiv:2307.03172</em>.
+</div>
+<div id="ref-liu2021dense" class="csl-entry" role="listitem">
+Liu, Ye, Kazuma Hashimoto, Yingbo Zhou, Semih Yavuz, Caiming Xiong, and Philip S Yu. 2021. <span>“Dense Hierarchical Retrieval for Open-Domain Question Answering.”</span> <em>arXiv Preprint arXiv:2110.15439</em>.
+</div>
+<div id="ref-ma2023query" class="csl-entry" role="listitem">
+Ma, Xinbei, Yeyun Gong, Pengcheng He, Hai Zhao, and Nan Duan. 2023. <span>“Query Rewriting for Retrieval-Augmented Large Language Models.”</span> <em>arXiv Preprint arXiv:2305.14283</em>.
+</div>
+<div id="ref-Roeder2021linear" class="csl-entry" role="listitem">
+Roeder, Luke Metz, Geoffrey, and Durk Kingma. 2021. <span>“On Linear Identifiability of Learned Representations.”</span> <em>arXiv Preprint arXiv:2007.00810</em>.
+</div>
+<div id="ref-zhao2022dense" class="csl-entry" role="listitem">
+Zhao, Wayne Xin, Jing Liu, Ruiyang Ren, and Ji-Rong Wen. 2022. <span>“Dense Text Retrieval Based on Pretrained Language Models: A Survey.”</span> <em>arXiv Preprint arXiv:2211.14876</em>.
+</div>
+<div id="ref-zheng2023judging" class="csl-entry" role="listitem">
+Zheng, Lianmin, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, et al. 2023. <span>“Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena.”</span> <em>arXiv Preprint arXiv:2306.05685</em>.
+</div>
+</div>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./03_prepare_data.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">RAG Pipeline Implementation</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./05_observability_tools.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Observability Tools for RAG</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>
